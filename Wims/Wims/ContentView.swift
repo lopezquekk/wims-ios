@@ -7,55 +7,84 @@
 
 import SwiftUI
 import SwiftData
+import PersistencyLayer
+internal import Combine
+
+@MainActor
+@Observable
+final class ContentViewModel {
+
+    private let buildingRepository: BuildingRepository
+
+    var buildings: [BuildingDTO] = []
+
+    init(buildingRepository: BuildingRepository) {
+        self.buildingRepository = buildingRepository
+    }
+
+    func load() async {
+        do {
+            buildings = try await buildingRepository.fetchAll()
+        } catch {
+            // aquí puedes manejar error (toast, alert, etc.)
+            print("Error fetching buildings:", error)
+        }
+    }
+
+    func addBuilding(name: String) async {
+        do {
+            let building = try await buildingRepository.create(name: name)
+            buildings.append(building)
+        } catch {
+            print("Error creating building:", error)
+        }
+    }
+
+    func delete(at offsets: IndexSet) {
+        buildings.remove(atOffsets: offsets)
+        // ⚠️ opcional: delegar delete real al repo
+    }
+}
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+
+    @State private var viewModel = ContentViewModel(buildingRepository: BuildingRepositoryImpl(container: sharedModelContainer))
 
     var body: some View {
         NavigationSplitView {
             List {
-                ForEach(items) { item in
+                ForEach(viewModel.buildings) { item in
                     NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                        Text(item.createdAt, format: .dateTime)
                     } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                        Text(item.createdAt, format: .dateTime)
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .onDelete { offsets in
+                    Task {
+                        viewModel.delete(at: offsets)
+                    }
+                }
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
                 ToolbarItem {
-                    Button(action: addItem) {
+                    Button {
+                        Task {
+                            await viewModel.addBuilding(name: "Demo Building")
+                        }
+                    } label: {
                         Label("Add Item", systemImage: "plus")
                     }
                 }
             }
         } detail: {
             Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+        }.task {
+            await viewModel.load()
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
 }

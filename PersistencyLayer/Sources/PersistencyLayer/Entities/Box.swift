@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+@available(iOS 17, *)
 @Model
 final class Box {
 
@@ -34,5 +35,24 @@ final class Box {
         self.qrCode = qrCode
         self.spot = spot
         self.createdAt = .now
+    }
+}
+
+struct BoxDTO: Identifiable, Sendable {
+    let id: UUID
+    let label: String
+    let qrCode: String
+    let spotID: UUID
+    let createdAt: Date
+}
+
+extension BoxDTO {
+    @available(iOS 17, *)
+    init(model: Box) {
+        self.id = model.id
+        self.label = model.label
+        self.qrCode = model.qrCode
+        self.spotID = model.spot?.id ?? UUID()
+        self.createdAt = model.createdAt
     }
 }
