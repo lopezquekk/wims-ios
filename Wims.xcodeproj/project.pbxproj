@@ -33,14 +33,14 @@
 		C35A68D62F037A9F00447267 /* Wims.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wims.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C35A68E52F037AA000447267 /* WimsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WimsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C35A68EF2F037AA000447267 /* WimsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WimsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		C37AB2BA2F089DE5008CE98D /* SwiftDataQuery */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = SwiftDataQuery; path = ../SwiftDataQuery; sourceTree = SOURCE_ROOT; };
-		C37AB2BB2F089F7B008CE98D /* PersistencyLayer */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = PersistencyLayer; path = ../PersistencyLayer; sourceTree = SOURCE_ROOT; };
+		C37AB2BA2F089DE5008CE98D /* SwiftDataQuery */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = SwiftDataQuery; path = ./SwiftDataQuery; sourceTree = SOURCE_ROOT; };
+		C37AB2BB2F089F7B008CE98D /* PersistencyLayer */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = PersistencyLayer; path = ./PersistencyLayer; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C35A68D82F037A9F00447267 /* Wims */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Wims;
+			path = WimsApp;
 			sourceTree = "<group>";
 		};
 		C35A68E82F037AA000447267 /* WimsTests */ = {
@@ -271,7 +271,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [[ \"$(uname -m)\" == arm64 ]]; then\n    export PATH=\"/opt/homebrew/bin:$PATH\"\nelse\n    export PATH=\"/usr/local/bin:$PATH\"\nfi\n\nif command -v swiftlint >/dev/null 2>&1\nthen\n    cd \"${SRCROOT}/..\"\n    swiftlint || true\nelse\n    echo \"warning: \\`swiftlint\\` command not found - See https://github.com/realm/SwiftLint#installation for installation instructions.\"\nfi\n";
+			shellScript = "if [[ \"$(uname -m)\" == arm64 ]]; then\n    export PATH=\"/opt/homebrew/bin:$PATH\"\nelse\n    export PATH=\"/usr/local/bin:$PATH\"\nfi\n\nif command -v swiftlint >/dev/null 2>&1\nthen\n    cd \"${SRCROOT}\"\n    swiftlint || true\nelse\n    echo \"warning: \\`swiftlint\\` command not found - See https://github.com/realm/SwiftLint#installation for installation instructions.\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -620,11 +620,11 @@
 /* Begin XCLocalSwiftPackageReference section */
 		C37AB2BC2F09AFFE008CE98D /* XCLocalSwiftPackageReference "../PersistencyLayer" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../PersistencyLayer;
+			relativePath = ./PersistencyLayer;
 		};
 		C37AB2BF2F09B00E008CE98D /* XCLocalSwiftPackageReference "../SwiftDataQuery" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../SwiftDataQuery;
+			relativePath = ./SwiftDataQuery;
 		};
 /* End XCLocalSwiftPackageReference section */
 

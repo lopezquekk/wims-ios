@@ -12,7 +12,7 @@ platform :ios do
 
   # Paths (relative to project root, not fastlane dir)
   def project_path
-    File.expand_path("../Wims/Wims.xcodeproj", __dir__)
+    File.expand_path("../Wims.xcodeproj", __dir__)
   end
 
   def derived_data_path

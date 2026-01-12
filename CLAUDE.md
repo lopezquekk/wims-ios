@@ -11,13 +11,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### iOS App (Xcode)
 ```bash
 # Open the Xcode project
-open Wims/Wims.xcodeproj
+open Wims.xcodeproj
 
 # Build from command line
-xcodebuild -project Wims/Wims.xcodeproj -scheme Wims -destination 'platform=iOS Simulator,name=iPhone 16' build
+xcodebuild -project Wims.xcodeproj -scheme Wims -destination 'platform=iOS Simulator,name=iPhone 16' build
 
 # Run tests
-xcodebuild test -project Wims/Wims.xcodeproj -scheme Wims -destination 'platform=iOS Simulator,name=iPhone 16'
+xcodebuild test -project Wims.xcodeproj -scheme Wims -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
 ### Swift Packages
