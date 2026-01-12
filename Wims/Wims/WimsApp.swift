@@ -14,7 +14,11 @@ struct WimsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView(
+                buildingRepository: BuildingRepositoryImpl(container: sharedModelContainer),
+                boxRepository: BoxRepositoryImpl(container: sharedModelContainer),
+                itemRepository: ItemRepositoryImpl(container: sharedModelContainer)
+            )
         }
         .modelContainer(sharedModelContainer)
     }

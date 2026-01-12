@@ -39,11 +39,11 @@ extension Building {
     }
 }
 
-public struct BuildingDTO: Identifiable, Sendable {
+public struct BuildingDTO: Identifiable, Sendable, Hashable {
     public let id: UUID
     public let name: String
     public let createdAt: Date
-    
+
     public init(id: UUID, name: String, createdAt: Date) {
         self.id = id
         self.name = name

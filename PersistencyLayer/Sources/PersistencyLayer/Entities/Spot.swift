@@ -31,11 +31,18 @@ final class Spot {
     }
 }
 
-struct SpotDTO: Identifiable, Sendable {
-    let id: UUID
-    let name: String
-    let roomID: UUID
-    let createdAt: Date
+public struct SpotDTO: Identifiable, Sendable, Hashable {
+    public let id: UUID
+    public let name: String
+    public let roomID: UUID
+    public let createdAt: Date
+
+    public init(id: UUID, name: String, roomID: UUID, createdAt: Date) {
+        self.id = id
+        self.name = name
+        self.roomID = roomID
+        self.createdAt = createdAt
+    }
 }
 
 extension SpotDTO {

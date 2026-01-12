@@ -38,12 +38,41 @@ final class Box {
     }
 }
 
-struct BoxDTO: Identifiable, Sendable {
-    let id: UUID
-    let label: String
-    let qrCode: String
-    let spotID: UUID
-    let createdAt: Date
+public struct BoxDTO: Identifiable, Sendable, Hashable {
+    public let id: UUID
+    public let label: String
+    public let qrCode: String
+    public let spotID: UUID
+    public let createdAt: Date
+
+    // Location information
+    public let spotName: String
+    public let roomName: String
+    public let buildingName: String
+
+    public init(
+        id: UUID,
+        label: String,
+        qrCode: String,
+        spotID: UUID,
+        createdAt: Date,
+        spotName: String,
+        roomName: String,
+        buildingName: String
+    ) {
+        self.id = id
+        self.label = label
+        self.qrCode = qrCode
+        self.spotID = spotID
+        self.createdAt = createdAt
+        self.spotName = spotName
+        self.roomName = roomName
+        self.buildingName = buildingName
+    }
+
+    public var locationPath: String {
+        "\(buildingName) → \(roomName) → \(spotName)"
+    }
 }
 
 extension BoxDTO {
@@ -54,5 +83,10 @@ extension BoxDTO {
         self.qrCode = model.qrCode
         self.spotID = model.spot?.id ?? UUID()
         self.createdAt = model.createdAt
+
+        // Extract location information
+        self.spotName = model.spot?.name ?? "Unknown Spot"
+        self.roomName = model.spot?.room?.name ?? "Unknown Room"
+        self.buildingName = model.spot?.room?.building?.name ?? "Unknown Building"
     }
 }

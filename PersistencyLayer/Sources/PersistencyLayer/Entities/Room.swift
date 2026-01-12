@@ -31,11 +31,18 @@ final class Room {
     }
 }
 
-struct RoomDTO: Identifiable, Sendable {
-    let id: UUID
-    let name: String
-    let buildingID: UUID
-    let createdAt: Date
+public struct RoomDTO: Identifiable, Sendable, Hashable {
+    public let id: UUID
+    public let name: String
+    public let buildingID: UUID
+    public let createdAt: Date
+
+    public init(id: UUID, name: String, buildingID: UUID, createdAt: Date) {
+        self.id = id
+        self.name = name
+        self.buildingID = buildingID
+        self.createdAt = createdAt
+    }
 }
 
 extension RoomDTO {
