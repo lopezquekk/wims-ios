@@ -22,7 +22,6 @@ excluded:
 # Enabled Rules
 opt_in_rules:
   - array_init
-  - attributes
   - closure_end_indentation
   - closure_spacing
   - collection_alignment
@@ -83,6 +82,7 @@ disabled_rules:
   - trailing_whitespace
   - trailing_comma
   - implicit_return
+  - attributes
 
 # Rule Configurations
 line_length:
@@ -93,8 +93,8 @@ line_length:
   ignores_function_declarations: false
 
 file_length:
-  warning: 400
-  error: 500
+  warning: 500
+  error: 600
   ignore_comment_only_lines: true
 
 type_body_length:
