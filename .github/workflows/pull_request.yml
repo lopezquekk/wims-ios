@@ -125,7 +125,7 @@ jobs:
           bundler-cache: true  # Runs 'bundle install' and caches gems
 
       - name: Install Dependencies
-        run: bundle install
+        run: bundle install --path vendor/bundle
 
       - name: Build with Fastlane
         run: bundle exec fastlane build_app

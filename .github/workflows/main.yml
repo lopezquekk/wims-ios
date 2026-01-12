@@ -27,7 +27,7 @@ jobs:
           bundler-cache: true
 
       - name: Install Dependencies
-        run: bundle install
+        run: bundle install --path vendor/bundle
 
       - name: Install SwiftLint
         run: brew install swiftlint
