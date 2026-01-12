@@ -11,15 +11,22 @@ import SwiftUI
 struct SpotListView: View {
     let room: RoomDTO
 
-    @StateObject private var viewModel: SpotListViewModel
+    @State private var spotReducer: Reducer<SpotListViewModel>
     @State private var showingAddDialog = false
     @State private var newSpotName = ""
 
     init(room: RoomDTO) {
         self.room = room
-        self._viewModel = StateObject(wrappedValue: SpotListViewModel(
-            spotRepository: SpotRepositoryImpl(container: sharedModelContainer)
-        ))
+        self._spotReducer = State(
+            wrappedValue: .init(
+                reducer: SpotListViewModel(
+                    spotRepository: SpotRepositoryImpl(
+                        container: sharedModelContainer
+                    )
+                ),
+                initialState: .init()
+            )
+        )
     }
 
     var body: some View {
@@ -30,17 +37,17 @@ struct SpotListView: View {
                     addButton
                 }
             }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            .alert("Error", isPresented: .constant(spotReducer.errorMessage != nil)) {
                 Button("OK") {
-                    viewModel.errorMessage = nil
+                    // spotReducer.errorMessage = nil
                 }
             } message: {
-                if let error = viewModel.errorMessage {
+                if let error = spotReducer.errorMessage {
                     Text(error)
                 }
             }
             .task {
-                await viewModel.load(for: room)
+                await spotReducer.send(action: .load(room: room))
             }
             .sheet(isPresented: $showingAddDialog) {
                 addSpotSheet
@@ -51,22 +58,22 @@ struct SpotListView: View {
 
     private var spotsList: some View {
         Group {
-            if viewModel.isLoading {
+            if spotReducer.isLoading {
                 ProgressView("Loading spots...")
-            } else if viewModel.spots.isEmpty {
+            } else if spotReducer.spots.isEmpty {
                 emptyState
             } else {
                 List {
-                    ForEach(viewModel.spots) { spot in
+                    ForEach(spotReducer.spots) { spot in
                         NavigationLink {
-                            SpotDetailView(spot: spot, viewModel: viewModel)
+                            SpotDetailView(spot: spot, spotReducer: spotReducer)
                         } label: {
                             SpotRowView(spot: spot)
                         }
                     }
                     .onDelete { offsets in
                         Task {
-                            await viewModel.deleteSpots(at: offsets)
+                            await spotReducer.send(action: .deleteSpots(offsets: offsets))
                         }
                     }
                 }
@@ -116,7 +123,7 @@ struct SpotListView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         Task {
-                            await viewModel.addSpot(name: newSpotName, in: room)
+                            await spotReducer.send(action: .addSpot(name: newSpotName, room: room))
                             showingAddDialog = false
                             newSpotName = ""
                         }
@@ -148,14 +155,14 @@ struct SpotRowView: View {
 
 struct SpotDetailView: View {
     let spot: SpotDTO
-    @ObservedObject var viewModel: SpotListViewModel
+    @State private var spotReducer: Reducer<SpotListViewModel>
     @State private var showingEditSheet = false
-    @StateObject private var boxViewModel: BoxListViewModel
+    @State private var boxViewModel: BoxListViewModel
 
-    init(spot: SpotDTO, viewModel: SpotListViewModel) {
+    init(spot: SpotDTO, spotReducer: Reducer<SpotListViewModel>) {
         self.spot = spot
-        self.viewModel = viewModel
-        self._boxViewModel = StateObject(wrappedValue: BoxListViewModel(
+        self.spotReducer = spotReducer
+        self._boxViewModel = State(wrappedValue: BoxListViewModel(
             boxRepository: BoxRepositoryImpl(container: sharedModelContainer)
         ))
     }
@@ -213,7 +220,7 @@ struct SpotDetailView: View {
             }
         }
         .sheet(isPresented: $showingEditSheet) {
-            EditSpotSheet(spot: spot, viewModel: viewModel)
+            EditSpotSheet(spot: spot, spotReducer: spotReducer)
         }
         .task {
             await boxViewModel.load(for: spot)
@@ -223,14 +230,14 @@ struct SpotDetailView: View {
 
 struct EditSpotSheet: View {
     let spot: SpotDTO
-    @ObservedObject var viewModel: SpotListViewModel
+    @State var spotReducer: Reducer<SpotListViewModel>
 
     @Environment(\.dismiss) private var dismiss
     @State private var spotName: String
 
-    init(spot: SpotDTO, viewModel: SpotListViewModel) {
+    init(spot: SpotDTO, spotReducer: Reducer<SpotListViewModel>) {
         self.spot = spot
-        self.viewModel = viewModel
+        self.spotReducer = spotReducer
         self._spotName = State(initialValue: spot.name)
     }
 
@@ -257,7 +264,7 @@ struct EditSpotSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            await viewModel.updateSpot(id: spot.id, name: spotName)
+                            await spotReducer.send(action: .updateSpot(id: spot.id, name: spotName))
                             dismiss()
                         }
                     }

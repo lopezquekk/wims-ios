@@ -12,7 +12,7 @@ import SwiftUI
 struct ItemsForBoxView: View {
     let box: BoxDTO
 
-    @StateObject private var viewModel: ItemListViewModel
+    @State private var viewModel: ItemListViewModel
     @State private var showingAddDialog = false
     @State private var newItemName = ""
     @State private var newItemNotes = ""
@@ -21,7 +21,7 @@ struct ItemsForBoxView: View {
 
     init(box: BoxDTO) {
         self.box = box
-        self._viewModel = StateObject(wrappedValue: ItemListViewModel(
+        self._viewModel = State(wrappedValue: ItemListViewModel(
             itemRepository: ItemRepositoryImpl(container: sharedModelContainer)
         ))
     }
@@ -229,7 +229,7 @@ struct ItemForBoxRowView: View {
 
 struct ItemForBoxDetailView: View {
     let item: ItemDTO
-    @ObservedObject var viewModel: ItemListViewModel
+    @State var viewModel: ItemListViewModel
     @State private var showingEditSheet = false
 
     var body: some View {
@@ -324,7 +324,7 @@ struct ItemForBoxDetailView: View {
 
 struct EditItemSheet: View {
     let item: ItemDTO
-    @ObservedObject var viewModel: ItemListViewModel
+    @State var viewModel: ItemListViewModel
 
     @Environment(\.dismiss) private var dismiss
     @State private var itemName: String

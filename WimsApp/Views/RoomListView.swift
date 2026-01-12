@@ -11,13 +11,13 @@ import SwiftUI
 struct RoomListView: View {
     let building: BuildingDTO
 
-    @StateObject private var viewModel: RoomListViewModel
+    @State private var viewModel: RoomListViewModel
     @State private var showingAddDialog = false
     @State private var newRoomName = ""
 
     init(building: BuildingDTO) {
         self.building = building
-        self._viewModel = StateObject(wrappedValue: RoomListViewModel(
+        self._viewModel = State(wrappedValue: RoomListViewModel(
             roomRepository: RoomRepositoryImpl(container: sharedModelContainer)
         ))
     }
@@ -148,16 +148,23 @@ struct RoomRowView: View {
 
 struct RoomDetailView: View {
     let room: RoomDTO
-    @ObservedObject var viewModel: RoomListViewModel
+    @State var viewModel: RoomListViewModel
     @State private var showingEditSheet = false
-    @StateObject private var spotViewModel: SpotListViewModel
+    @State private var spotReducer: Reducer<SpotListViewModel>
 
     init(room: RoomDTO, viewModel: RoomListViewModel) {
         self.room = room
         self.viewModel = viewModel
-        self._spotViewModel = StateObject(wrappedValue: SpotListViewModel(
-            spotRepository: SpotRepositoryImpl(container: sharedModelContainer)
-        ))
+        self._spotReducer = State(
+            wrappedValue: .init(
+                reducer: SpotListViewModel(
+                    spotRepository: SpotRepositoryImpl(
+                        container: sharedModelContainer
+                    )
+                ),
+                initialState: .init()
+            )
+        )
     }
 
     var body: some View {
@@ -170,20 +177,20 @@ struct RoomDetailView: View {
             }
 
             Section {
-                if spotViewModel.isLoading {
+                if spotReducer.isLoading {
                     HStack {
                         Spacer()
                         ProgressView()
                         Spacer()
                     }
-                } else if spotViewModel.spots.isEmpty {
+                } else if spotReducer.spots.isEmpty {
                     Text("No spots in this room")
                         .foregroundStyle(.secondary)
                         .font(.callout)
                 } else {
-                    ForEach(spotViewModel.spots) { spot in
+                    ForEach(spotReducer.spots) { spot in
                         NavigationLink {
-                            SpotDetailView(spot: spot, viewModel: spotViewModel)
+                            SpotDetailView(spot: spot, spotReducer: spotReducer)
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(spot.name)
@@ -212,14 +219,14 @@ struct RoomDetailView: View {
             EditRoomSheet(room: room, viewModel: viewModel)
         }
         .task {
-            await spotViewModel.load(for: room)
+            await spotReducer.send(action: .load(room: room))
         }
     }
 }
 
 struct EditRoomSheet: View {
     let room: RoomDTO
-    @ObservedObject var viewModel: RoomListViewModel
+    @State var viewModel: RoomListViewModel
 
     @Environment(\.dismiss) private var dismiss
     @State private var roomName: String

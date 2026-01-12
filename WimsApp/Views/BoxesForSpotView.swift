@@ -11,14 +11,14 @@ import SwiftUI
 struct BoxesForSpotView: View {
     let spot: SpotDTO
 
-    @StateObject private var viewModel: BoxListViewModel
+    @State private var viewModel: BoxListViewModel
     @State private var showingAddDialog = false
     @State private var newBoxLabel = ""
     @State private var newBoxQRCode = ""
 
     init(spot: SpotDTO) {
         self.spot = spot
-        self._viewModel = StateObject(wrappedValue: BoxListViewModel(
+        self._viewModel = State(wrappedValue: BoxListViewModel(
             boxRepository: BoxRepositoryImpl(container: sharedModelContainer)
         ))
     }
@@ -160,7 +160,7 @@ struct BoxForSpotRowView: View {
 
 struct BoxForSpotDetailView: View {
     let box: BoxDTO
-    @ObservedObject var viewModel: BoxListViewModel
+    @State var viewModel: BoxListViewModel
     @State private var showingEditSheet = false
 
     var body: some View {
@@ -197,7 +197,7 @@ struct BoxForSpotDetailView: View {
 
 struct EditBoxSheet: View {
     let box: BoxDTO
-    @ObservedObject var viewModel: BoxListViewModel
+    @State var viewModel: BoxListViewModel
 
     @Environment(\.dismiss) private var dismiss
     @State private var boxLabel: String

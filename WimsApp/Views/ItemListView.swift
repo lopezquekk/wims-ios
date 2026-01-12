@@ -10,10 +10,10 @@ import PhotosUI
 import SwiftUI
 
 struct ItemListView: View {
-    @StateObject private var viewModel: ItemListViewModel
+    @State private var viewModel: ItemListViewModel
 
     init(viewModel: ItemListViewModel) {
-        self._viewModel = StateObject(wrappedValue: viewModel)
+        self._viewModel = State(wrappedValue: viewModel)
     }
 
     @State private var showingAddDialog = false
@@ -145,7 +145,7 @@ struct ItemRowView: View {
 
 struct ItemDetailView: View {
     let item: ItemDTO
-    @ObservedObject var viewModel: ItemListViewModel
+    @State var viewModel: ItemListViewModel
     @State private var showingEditSheet = false
 
     var body: some View {
@@ -241,7 +241,7 @@ struct ItemDetailView: View {
 // MARK: - Add Item Sheet
 
 struct AddItemFromTabSheet: View {
-    @ObservedObject var viewModel: ItemListViewModel
+    @State var viewModel: ItemListViewModel
     @Environment(\.dismiss) private var dismiss
 
     @State private var buildings: [BuildingDTO] = []
@@ -475,7 +475,7 @@ struct AddItemFromTabSheet: View {
 
 struct EditItemFromListSheet: View {
     let item: ItemDTO
-    @ObservedObject var viewModel: ItemListViewModel
+    @State var viewModel: ItemListViewModel
 
     @Environment(\.dismiss) private var dismiss
     @State private var itemName: String

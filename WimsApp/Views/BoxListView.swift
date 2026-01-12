@@ -9,12 +9,12 @@ import PersistencyLayer
 import SwiftUI
 
 struct BoxListView: View {
-    @StateObject private var viewModel: BoxListViewModel
+    @State private var viewModel: BoxListViewModel
     @State private var showingQRScanner = false
     @State private var qrCodeInput = ""
 
     init(viewModel: BoxListViewModel) {
-        self._viewModel = StateObject(wrappedValue: viewModel)
+        self._viewModel = State(wrappedValue: viewModel)
     }
 
     var body: some View {
@@ -173,11 +173,11 @@ struct BoxRowView: View {
 struct BoxDetailView: View {
     let box: BoxDTO
 
-    @StateObject private var itemViewModel: ItemListViewModel
+    @State private var itemViewModel: ItemListViewModel
 
     init(box: BoxDTO) {
         self.box = box
-        self._itemViewModel = StateObject(wrappedValue: ItemListViewModel(
+        self._itemViewModel = State(wrappedValue: ItemListViewModel(
             itemRepository: ItemRepositoryImpl(container: sharedModelContainer)
         ))
     }

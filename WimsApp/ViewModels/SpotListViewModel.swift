@@ -10,82 +10,104 @@ import PersistencyLayer
 import SwiftUI
 
 @MainActor
-final class SpotListViewModel: ObservableObject {
-    private let spotRepository: SpotRepository
+final class SpotListViewModel: ReducerProtocol {
+    struct State {
+        var spots: [SpotDTO] = []
+        var isLoading = false
+        var errorMessage: String?
+    }
 
-    @Published var spots: [SpotDTO] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+    enum Action: Equatable {
+        case load(room: RoomDTO)
+        case addSpot(name: String, room: RoomDTO)
+        case updateSpot(id: UUID, name: String)
+        case deleteSpots(offsets: IndexSet)
+    }
+
+    private let spotRepository: SpotRepository
 
     init(spotRepository: SpotRepository) {
         self.spotRepository = spotRepository
     }
 
-    func load(for room: RoomDTO) async {
-        isLoading = true
-        errorMessage = nil
+    func reduce(state: inout State, action: Action) async {
+        switch action {
+        case let .load(room):
+            await load(for: room, state: &state)
+        case let .addSpot(name, room):
+            await addSpot(name: name, in: room, state: &state)
+        case let .updateSpot(id, name):
+            await updateSpot(id: id, name: name, state: &state)
+        case let .deleteSpots(offsets):
+            await deleteSpots(at: offsets, state: &state)
+        }
+    }
+
+    private func load(for room: RoomDTO, state: inout State) async {
+        state.isLoading = true
+        state.errorMessage = nil
 
         do {
-            spots = try await spotRepository.fetch(in: room)
+            state.spots = try await spotRepository.fetch(in: room)
         } catch {
-            errorMessage = "Error loading spots: \(error.localizedDescription)"
+            state.errorMessage = "Error loading spots: \(error.localizedDescription)"
             print("Error fetching spots:", error)
         }
 
-        isLoading = false
+        state.isLoading = false
     }
 
-    func addSpot(name: String, in room: RoomDTO) async {
+    private func addSpot(name: String, in room: RoomDTO, state: inout State) async {
         guard !name.isEmpty else {
-            errorMessage = "Spot name cannot be empty"
+            state.errorMessage = "Spot name cannot be empty"
             return
         }
 
-        errorMessage = nil
+        state.errorMessage = nil
 
         do {
             let spot = try await spotRepository.create(name: name, in: room)
-            spots.append(spot)
+            state.spots.append(spot)
         } catch {
-            errorMessage = "Error creating spot: \(error.localizedDescription)"
+            state.errorMessage = "Error creating spot: \(error.localizedDescription)"
             print("Error creating spot:", error)
         }
     }
 
-    func updateSpot(id: UUID, name: String) async {
+    func updateSpot(id: UUID, name: String, state: inout State) async {
         guard !name.isEmpty else {
-            errorMessage = "Spot name cannot be empty"
+            state.errorMessage = "Spot name cannot be empty"
             return
         }
 
-        errorMessage = nil
+        state.errorMessage = nil
 
         do {
             let updatedSpot = try await spotRepository.update(id: id, name: name)
-            if let index = spots.firstIndex(where: { $0.id == id }) {
-                spots[index] = updatedSpot
+            if let index = state.spots.firstIndex(where: { $0.id == id }) {
+                state.spots[index] = updatedSpot
             }
         } catch {
-            errorMessage = "Error updating spot: \(error.localizedDescription)"
+            state.errorMessage = "Error updating spot: \(error.localizedDescription)"
             print("Error updating spot:", error)
         }
     }
 
-    func deleteSpots(at offsets: IndexSet) async {
-        errorMessage = nil
+    func deleteSpots(at offsets: IndexSet, state: inout State) async {
+        state.errorMessage = nil
 
         for index in offsets {
-            let spot = spots[index]
+            let spot = state.spots[index]
 
             do {
                 try await spotRepository.delete(id: spot.id)
             } catch {
-                errorMessage = "Error deleting spot: \(error.localizedDescription)"
+                state.errorMessage = "Error deleting spot: \(error.localizedDescription)"
                 print("Error deleting spot:", error)
                 return
             }
         }
 
-        spots.remove(atOffsets: offsets)
+        state.spots.remove(atOffsets: offsets)
     }
 }

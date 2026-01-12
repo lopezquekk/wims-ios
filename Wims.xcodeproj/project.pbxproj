@@ -38,7 +38,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C35A68D82F037A9F00447267 /* Wims */ = {
+		C35A68D82F037A9F00447267 /* WimsApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = WimsApp;
 			sourceTree = "<group>";
@@ -88,7 +88,7 @@
 			children = (
 				C37AB2BB2F089F7B008CE98D /* PersistencyLayer */,
 				C37AB2BA2F089DE5008CE98D /* SwiftDataQuery */,
-				C35A68D82F037A9F00447267 /* Wims */,
+				C35A68D82F037A9F00447267 /* WimsApp */,
 				C35A68E82F037AA000447267 /* WimsTests */,
 				C35A68F22F037AA000447267 /* WimsUITests */,
 				C35A68D72F037A9F00447267 /* Products */,
@@ -122,7 +122,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				C35A68D82F037A9F00447267 /* Wims */,
+				C35A68D82F037A9F00447267 /* WimsApp */,
 			);
 			name = Wims;
 			packageProductDependencies = (
@@ -214,8 +214,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				C35A69022F037AE500447267 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
-				C37AB2BC2F09AFFE008CE98D /* XCLocalSwiftPackageReference "../PersistencyLayer" */,
-				C37AB2BF2F09B00E008CE98D /* XCLocalSwiftPackageReference "../SwiftDataQuery" */,
+				C37AB2BC2F09AFFE008CE98D /* XCLocalSwiftPackageReference "./PersistencyLayer" */,
+				C37AB2BF2F09B00E008CE98D /* XCLocalSwiftPackageReference "./SwiftDataQuery" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C35A68D72F037A9F00447267 /* Products */;
@@ -618,11 +618,11 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		C37AB2BC2F09AFFE008CE98D /* XCLocalSwiftPackageReference "../PersistencyLayer" */ = {
+		C37AB2BC2F09AFFE008CE98D /* XCLocalSwiftPackageReference "./PersistencyLayer" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ./PersistencyLayer;
 		};
-		C37AB2BF2F09B00E008CE98D /* XCLocalSwiftPackageReference "../SwiftDataQuery" */ = {
+		C37AB2BF2F09B00E008CE98D /* XCLocalSwiftPackageReference "./SwiftDataQuery" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ./SwiftDataQuery;
 		};

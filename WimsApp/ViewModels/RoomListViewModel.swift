@@ -10,12 +10,13 @@ import PersistencyLayer
 import SwiftUI
 
 @MainActor
-final class RoomListViewModel: ObservableObject {
+@Observable
+final class RoomListViewModel {
     private let roomRepository: RoomRepository
 
-    @Published var rooms: [RoomDTO] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+    var rooms: [RoomDTO] = []
+    var isLoading = false
+    var errorMessage: String?
 
     init(roomRepository: RoomRepository) {
         self.roomRepository = roomRepository

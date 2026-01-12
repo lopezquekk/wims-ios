@@ -10,13 +10,14 @@ import PersistencyLayer
 import SwiftUI
 
 @MainActor
-final class BoxListViewModel: ObservableObject {
+@Observable
+final class BoxListViewModel {
     private let boxRepository: BoxRepository
 
-    @Published var boxes: [BoxDTO] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
-    @Published var searchText = ""
+    var boxes: [BoxDTO] = []
+    var isLoading = false
+    var errorMessage: String?
+    var searchText = ""
 
     init(boxRepository: BoxRepository) {
         self.boxRepository = boxRepository

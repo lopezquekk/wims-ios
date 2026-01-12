@@ -156,11 +156,11 @@ struct BuildingRowView: View {
 struct BuildingDetailView: View {
     let building: BuildingDTO
     @State private var showingEditSheet = false
-    @StateObject private var roomViewModel: RoomListViewModel
+    @State private var roomViewModel: RoomListViewModel
 
     init(building: BuildingDTO) {
         self.building = building
-        self._roomViewModel = StateObject(wrappedValue: RoomListViewModel(
+        self._roomViewModel = State(wrappedValue: RoomListViewModel(
             roomRepository: RoomRepositoryImpl(container: sharedModelContainer)
         ))
     }

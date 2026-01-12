@@ -10,13 +10,14 @@ import PersistencyLayer
 import SwiftUI
 
 @MainActor
-final class ItemListViewModel: ObservableObject {
+@Observable
+final class ItemListViewModel {
     private let itemRepository: ItemRepository
 
-    @Published var items: [ItemDTO] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
-    @Published var searchText = ""
+    var items: [ItemDTO] = []
+    var isLoading = false
+    var errorMessage: String?
+    var searchText = ""
 
     init(itemRepository: ItemRepository) {
         self.itemRepository = itemRepository
