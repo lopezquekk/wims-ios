@@ -6,13 +6,18 @@ default_platform(:ios)
 platform :ios do
 
   # Configuration
-  PROJECT_PATH = "Wims/Wims.xcodeproj"
   SCHEME = "Wims"
   DEVICE = "iPhone 16"
   DESTINATION = "platform=iOS Simulator,name=iPhone 16"
 
-  # Derived data path for CI
-  DERIVED_DATA = "build/DerivedData"
+  # Paths (relative to project root, not fastlane dir)
+  def project_path
+    File.expand_path("../Wims/Wims.xcodeproj", __dir__)
+  end
+
+  def derived_data_path
+    File.expand_path("../build/DerivedData", __dir__)
+  end
 
   # ========================================
   # Lane: Setup CI Environment
@@ -54,20 +59,15 @@ platform :ios do
   lane :build_app do
     clear_derived_data if is_ci
 
-    Dir.chdir("..") do
-      args = [
-        "xcodebuild",
-        "-project", PROJECT_PATH,
-        "-scheme", SCHEME,
-        "-destination", DESTINATION,
-        "-configuration", "Debug",
-        "-derivedDataPath", DERIVED_DATA
-      ]
-      args << "clean" if is_ci
-      args << "build"
-
-      sh(*args)
-    end
+    xcodebuild(
+      project: project_path,
+      scheme: SCHEME,
+      destination: DESTINATION,
+      configuration: "Debug",
+      derivedDataPath: derived_data_path,
+      clean: is_ci,
+      build: true
+    )
   end
 
   # ========================================
@@ -76,10 +76,10 @@ platform :ios do
   desc "Run unit tests for Wims app"
   lane :test_unit do
     run_tests(
-      project: PROJECT_PATH,
+      project: project_path,
       scheme: SCHEME,
       destination: DESTINATION,
-      derivedDataPath: DERIVED_DATA,
+      derivedDataPath: derived_data_path,
       code_coverage: true,
       only_testing: ["WimsTests"],
       result_bundle: true,
@@ -95,10 +95,10 @@ platform :ios do
   desc "Run UI tests for Wims app"
   lane :test_ui do
     run_tests(
-      project: PROJECT_PATH,
+      project: project_path,
       scheme: SCHEME,
       destination: DESTINATION,
-      derivedDataPath: DERIVED_DATA,
+      derivedDataPath: derived_data_path,
       code_coverage: true,
       only_testing: ["WimsUITests"],
       result_bundle: true,
@@ -156,10 +156,10 @@ platform :ios do
   lane :coverage do
     # Generate coverage using slather
     slather(
-      proj: PROJECT_PATH,
+      proj: project_path,
       scheme: SCHEME,
       configuration: "Debug",
-      build_directory: DERIVED_DATA,
+      build_directory: derived_data_path,
       output_directory: "build/coverage",
       cobertura_xml: true,        # For Codecov
       html: true,                  # Human-readable HTML
