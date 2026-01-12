@@ -54,17 +54,20 @@ platform :ios do
   lane :build_app do
     clear_derived_data if is_ci
 
-    clean_arg = is_ci ? "clean" : ""
+    Dir.chdir("..") do
+      args = [
+        "xcodebuild",
+        "-project", PROJECT_PATH,
+        "-scheme", SCHEME,
+        "-destination", DESTINATION,
+        "-configuration", "Debug",
+        "-derivedDataPath", DERIVED_DATA
+      ]
+      args << "clean" if is_ci
+      args << "build"
 
-    sh(
-      "cd .. && xcodebuild " +
-      "-project #{PROJECT_PATH} " +
-      "-scheme #{SCHEME} " +
-      "-destination '#{DESTINATION}' " +
-      "-configuration Debug " +
-      "-derivedDataPath #{DERIVED_DATA} " +
-      "#{clean_arg} build"
-    )
+      sh(*args)
+    end
   end
 
   # ========================================
