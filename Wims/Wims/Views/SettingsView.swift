@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct SettingsView: View {
-
     @AppStorage("appTheme") private var appTheme: AppTheme = .system
     @AppStorage("showImages") private var showImages = true
     @AppStorage("enableNotifications") private var enableNotifications = false

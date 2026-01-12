@@ -5,12 +5,11 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
-import SwiftUI
-import PhotosUI
 import PersistencyLayer
+import PhotosUI
+import SwiftUI
 
 struct ItemListView: View {
-
     @StateObject private var viewModel: ItemListViewModel
 
     init(viewModel: ItemListViewModel) {

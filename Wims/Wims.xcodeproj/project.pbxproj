@@ -112,6 +112,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = C35A68F92F037AA000447267 /* Build configuration list for PBXNativeTarget "Wims" */;
 			buildPhases = (
+				B85010DA519841F6AE6AEDFC /* SwiftLint */,
 				C35A68D22F037A9F00447267 /* Sources */,
 				C35A68D32F037A9F00447267 /* Frameworks */,
 				C35A68D42F037A9F00447267 /* Resources */,
@@ -251,6 +252,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		B85010DA519841F6AE6AEDFC /* SwiftLint */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 12;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = SwiftLint;
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [[ \"$(uname -m)\" == arm64 ]]; then\n    export PATH=\"/opt/homebrew/bin:$PATH\"\nelse\n    export PATH=\"/usr/local/bin:$PATH\"\nfi\n\nif command -v swiftlint >/dev/null 2>&1\nthen\n    cd \"${SRCROOT}/..\"\n    swiftlint || true\nelse\n    echo \"warning: \\`swiftlint\\` command not found - See https://github.com/realm/SwiftLint#installation for installation instructions.\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		C35A68D22F037A9F00447267 /* Sources */ = {

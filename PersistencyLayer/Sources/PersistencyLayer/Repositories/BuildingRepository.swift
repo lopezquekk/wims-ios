@@ -19,7 +19,6 @@ public extension SwiftDataRepository {
         priority: TaskPriority = .utility,
         _ work: @Sendable @escaping (ModelContext) throws -> T
     ) async throws -> T {
-
         let container = modelContainer
 
         return try await Task.detached(priority: priority) {
@@ -76,4 +75,3 @@ public protocol ItemRepository: Sendable, SwiftDataRepository {
     func update(id: UUID, name: String, notes: String?, imageData: Data?) async throws -> ItemDTO
     func delete(id: UUID) async throws
 }
-

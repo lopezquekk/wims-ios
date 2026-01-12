@@ -1,6 +1,7 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
 
+import Foundation
 import SwiftData
 
 @available(iOS 17, *)
@@ -12,7 +13,14 @@ public let sharedModelContainer: ModelContainer = {
         Box.self,
         Item.self
     ])
-    let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+
+    // Use explicit URL to avoid "Unable to determine Bundle Name" error in tests
+    let url = URL.documentsDirectory.appending(path: "Wims.sqlite")
+    let modelConfiguration = ModelConfiguration(
+        schema: schema,
+        url: url,
+        cloudKitDatabase: .none
+    )
 
     do {
         return try ModelContainer(for: schema, configurations: [modelConfiguration])

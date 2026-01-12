@@ -1,11 +1,10 @@
-import Testing
-import SwiftData
 import Foundation
 @testable import PersistencyLayer
+import SwiftData
+import Testing
 
 @Suite("PersistencyLayer Tests")
 struct PersistencyLayerTests {
-
     // MARK: - Performance Tests
 
     @available(iOS 17, *)
@@ -16,7 +15,7 @@ struct PersistencyLayerTests {
 
         let startTime = ContinuousClock.now
 
-        for i in 0..<10000 {
+        for i in 0..<10_000 {
             _ = try await repository.create(name: "Building \(i)")
         }
 
@@ -113,7 +112,7 @@ struct PersistencyLayerTests {
         _ = try await repository.create(name: "Test Building")
 
         // Usar el método background directamente para verificar
-        let wasOnMainThread = try await repository.background { context in
+        let wasOnMainThread = try await repository.background { _ in
             Thread.isMainThread
         }
 

@@ -1,10 +1,8 @@
-
-import SwiftData
 import Foundation
+import SwiftData
 
 @available(iOS 17, *)
 public actor ItemRepositoryImpl: ItemRepository {
-
     public let modelContainer: ModelContainer
 
     public init(container: ModelContainer) {
@@ -12,7 +10,7 @@ public actor ItemRepositoryImpl: ItemRepository {
     }
 
     public func fetchAll() async throws -> [ItemDTO] {
-        return try await background { context in
+        try await background { context in
             let descriptor = FetchDescriptor<Item>(
                 sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
             )

@@ -5,13 +5,12 @@
 //  Created by Camilo Lopez on 12/29/25.
 //
 
-import SwiftUI
-import SwiftData
 import PersistencyLayer
+import SwiftData
+import SwiftUI
 
 @main
 struct WimsApp: App {
-
     var body: some Scene {
         WindowGroup {
             MainTabView(

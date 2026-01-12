@@ -5,13 +5,12 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
-import SwiftUI
 import Combine
 import PersistencyLayer
+import SwiftUI
 
 @MainActor
 final class SpotListViewModel: ObservableObject {
-
     private let spotRepository: SpotRepository
 
     @Published var spots: [SpotDTO] = []

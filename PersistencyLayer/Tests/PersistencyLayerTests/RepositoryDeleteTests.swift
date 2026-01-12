@@ -1,11 +1,10 @@
-import Testing
-import SwiftData
 import Foundation
 @testable import PersistencyLayer
+import SwiftData
+import Testing
 
 @Suite("Repository Delete Tests")
 struct RepositoryDeleteTests {
-
     // MARK: - Building Delete Tests
 
     @available(iOS 17, *)
@@ -27,7 +26,7 @@ struct RepositoryDeleteTests {
 
         // Verify it's deleted
         let allAfter = try await repository.fetchAll()
-        #expect(allAfter.count == 0)
+        #expect(allAfter.isEmpty)
     }
 
     @available(iOS 17, *)
@@ -64,7 +63,7 @@ struct RepositoryDeleteTests {
 
         // Verify building is deleted
         let buildings = try await buildingRepo.fetchAll()
-        #expect(buildings.count == 0)
+        #expect(buildings.isEmpty)
     }
 
     // MARK: - Room Delete Tests
@@ -88,7 +87,7 @@ struct RepositoryDeleteTests {
 
         // Verify it's deleted
         let roomsAfter = try await roomRepo.fetch(in: building)
-        #expect(roomsAfter.count == 0)
+        #expect(roomsAfter.isEmpty)
     }
 
     @available(iOS 17, *)
@@ -125,7 +124,7 @@ struct RepositoryDeleteTests {
 
         // Verify it's deleted
         let spotsAfter = try await spotRepo.fetch(in: room)
-        #expect(spotsAfter.count == 0)
+        #expect(spotsAfter.isEmpty)
     }
 
     @available(iOS 17, *)
@@ -164,7 +163,7 @@ struct RepositoryDeleteTests {
 
         // Verify it's deleted
         let boxesAfter = try await boxRepo.fetch(in: spot)
-        #expect(boxesAfter.count == 0)
+        #expect(boxesAfter.isEmpty)
     }
 
     @available(iOS 17, *)
@@ -205,7 +204,7 @@ struct RepositoryDeleteTests {
 
         // Verify it's deleted
         let itemsAfter = try await itemRepo.fetch(in: box)
-        #expect(itemsAfter.count == 0)
+        #expect(itemsAfter.isEmpty)
     }
 
     @available(iOS 17, *)
@@ -245,7 +244,7 @@ struct RepositoryDeleteTests {
 
         // Verify all deleted
         let all = try await repository.fetchAll()
-        #expect(all.count == 0)
+        #expect(all.isEmpty)
         #expect(duration < .seconds(3), "Deleting 100 buildings should take less than 3 seconds, took \(duration)")
     }
 

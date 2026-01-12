@@ -11,7 +11,6 @@ import SwiftData
 @available(iOS 17, *)
 @Model
 public final class Item {
-
     @Attribute(.unique)
     public var id: UUID
 

@@ -1,0 +1,215 @@
+# Fastfile for wims-ios
+# Swift 6.0+, iOS 17+, Xcode 16+
+
+default_platform(:ios)
+
+platform :ios do
+
+  # Configuration
+  SCHEME = "Wims"
+  DEVICE = "iPhone 16"
+  DESTINATION = "platform=iOS Simulator,name=iPhone 16"
+
+  # Paths (relative to project root, not fastlane dir)
+  def project_path
+    File.expand_path("../Wims/Wims.xcodeproj", __dir__)
+  end
+
+  def derived_data_path
+    File.expand_path("../build/DerivedData", __dir__)
+  end
+
+  # ========================================
+  # Lane: Setup CI Environment
+  # ========================================
+  desc "Setup CI environment (install SwiftLint, etc.)"
+  lane :setup_ci do
+    sh("brew install swiftlint") if is_ci
+  end
+
+  # ========================================
+  # Lane: Run SwiftLint
+  # ========================================
+  desc "Run SwiftLint on all Swift files"
+  lane :lint do
+    swiftlint(
+      mode: :lint,
+      config_file: ".swiftlint.yml",
+      reporter: "github-actions-logging",
+      raise_if_swiftlint_error: true,
+      ignore_exit_status: false
+    )
+  end
+
+  # ========================================
+  # Lane: Run SwiftFormat (validation only)
+  # ========================================
+  desc "Validate Swift formatting (read-only check)"
+  lane :format_check do
+    # SwiftFormat not installed yet, but this lane reserves the space
+    # Will need: brew install swiftformat
+    # swiftformat --lint .
+    UI.important("SwiftFormat check - to be implemented")
+  end
+
+  # ========================================
+  # Lane: Build Main App
+  # ========================================
+  desc "Build the Wims iOS app"
+  lane :build_app do
+    clear_derived_data if is_ci
+
+    gym(
+      project: project_path,
+      scheme: SCHEME,
+      destination: DESTINATION,
+      configuration: "Debug",
+      derived_data_path: derived_data_path,
+      clean: is_ci,
+      output_directory: "build/artifacts",
+      skip_codesigning: true,
+      skip_package_ipa: true,
+      build_path: "build"
+    )
+  end
+
+  # ========================================
+  # Lane: Run Unit Tests (App)
+  # ========================================
+  desc "Run unit tests for Wims app"
+  lane :test_unit do
+    run_tests(
+      project: project_path,
+      scheme: SCHEME,
+      destination: DESTINATION,
+      derivedDataPath: derived_data_path,
+      code_coverage: true,
+      only_testing: ["WimsTests"],
+      result_bundle: true,
+      output_directory: "build/test_output",
+      buildlog_path: "build/logs",
+      xcargs: "-quiet"
+    )
+  end
+
+  # ========================================
+  # Lane: Run UI Tests
+  # ========================================
+  desc "Run UI tests for Wims app"
+  lane :test_ui do
+    run_tests(
+      project: project_path,
+      scheme: SCHEME,
+      destination: DESTINATION,
+      derivedDataPath: derived_data_path,
+      code_coverage: true,
+      only_testing: ["WimsUITests"],
+      result_bundle: true,
+      output_directory: "build/test_output",
+      buildlog_path: "build/logs",
+      xcargs: "-quiet"
+    )
+  end
+
+  # ========================================
+  # Lane: Run All App Tests
+  # ========================================
+  desc "Run all tests for Wims app (unit + UI)"
+  lane :test_app do
+    test_unit
+    test_ui
+  end
+
+  # ========================================
+  # Lane: Build Swift Packages
+  # ========================================
+  desc "Build all Swift packages"
+  lane :build_packages do
+    UI.header("Building PersistencyLayer")
+    Dir.chdir("../PersistencyLayer") do
+      sh("swift build -v")
+    end
+
+    UI.header("Building SwiftDataQuery")
+    Dir.chdir("../SwiftDataQuery") do
+      sh("swift build -v")
+    end
+  end
+
+  # ========================================
+  # Lane: Test Swift Packages
+  # ========================================
+  desc "Test all Swift packages"
+  lane :test_packages do
+    UI.header("Testing PersistencyLayer")
+    Dir.chdir("../PersistencyLayer") do
+      sh("swift test --enable-code-coverage")
+    end
+
+    UI.header("Testing SwiftDataQuery")
+    Dir.chdir("../SwiftDataQuery") do
+      sh("swift test --enable-code-coverage")
+    end
+  end
+
+  # ========================================
+  # Lane: Generate Coverage Report
+  # ========================================
+  desc "Generate code coverage report for Wims app"
+  lane :coverage do
+    # Generate coverage using slather
+    slather(
+      proj: project_path,
+      scheme: SCHEME,
+      configuration: "Debug",
+      build_directory: derived_data_path,
+      output_directory: "build/coverage",
+      cobertura_xml: true,        # For Codecov
+      html: true,                  # Human-readable HTML
+      show: !is_ci,               # Open in browser locally
+      ignore: [
+        "**/Tests/*",
+        "**/WimsUITests/*",
+        "**/*Tests.swift",
+        "**/WimsApp.swift"         # App entry point
+      ]
+    )
+  end
+
+  # ========================================
+  # Lane: Upload to Codecov
+  # ========================================
+  desc "Upload coverage to Codecov"
+  lane :upload_coverage do
+    # Codecov expects coverage.xml in specific format
+    sh("curl -Os https://uploader.codecov.io/latest/macos/codecov")
+    sh("chmod +x codecov")
+    sh("./codecov -f ../build/coverage/cobertura.xml -t ${CODECOV_TOKEN}")
+  end
+
+  # ========================================
+  # Lane: CI - Full Pipeline
+  # ========================================
+  desc "Run full CI pipeline (build, test, coverage)"
+  lane :ci do
+    setup_ci
+    lint
+    build_packages
+    test_packages
+    build_app
+    test_app
+    coverage
+  end
+
+  # ========================================
+  # Lane: PR Check
+  # ========================================
+  desc "Quick checks for pull requests (lint + build + unit tests)"
+  lane :pr_check do
+    lint
+    build_packages
+    test_packages
+    build_app
+    test_unit  # Skip UI tests for faster PR checks
+  end
+end
