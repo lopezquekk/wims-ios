@@ -52,7 +52,7 @@ swift test --filter RepositoryDeleteTests
 
 The project uses **Swift Package Manager** to separate concerns into modules:
 
-- **Wims/** (Main iOS app) - SwiftUI views, view models, navigation
+- **/** (Main iOS app) - SwiftUI views, view models, navigation
 - **PersistencyLayer/** (SPM Package) - SwiftData entities, repositories, DTOs
 - **SwiftDataQuery/** (SPM Package) - Generic SwiftData query utilities
 
@@ -281,7 +281,7 @@ PersistencyLayer/
     ├── PersistencyLayerTests.swift      # Main test suite
     └── RepositoryDeleteTests.swift      # Cascade deletion tests
 
-Wims/Wims/
+Wims/
 ├── Views/              # SwiftUI views (15 files)
 ├── ViewModels/         # Observable view models (5 files)
 └── WimsApp.swift       # App entry point

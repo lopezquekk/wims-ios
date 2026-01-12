@@ -6,7 +6,7 @@ Script to add SwiftLint Run Script Phase to Xcode project
 import uuid
 import re
 
-project_file = 'Wims/Wims.xcodeproj/project.pbxproj'
+project_file = 'Wims.xcodeproj/project.pbxproj'
 
 # Read the project file
 with open(project_file, 'r') as f:
@@ -71,7 +71,7 @@ with open(project_file, 'w') as f:
 print("✅ Successfully added SwiftLint Run Script Phase to Wims target!")
 print("🔨 Build the project to run SwiftLint automatically")
 print("\nTo verify in Xcode:")
-print("  1. Open Wims/Wims.xcodeproj")
+print("  1. Open Wims.xcodeproj")
 print("  2. Select the Wims target")
 print("  3. Go to Build Phases tab")
 print("  4. You should see 'SwiftLint' phase before 'Sources'")

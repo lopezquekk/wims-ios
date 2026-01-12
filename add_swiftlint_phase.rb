@@ -3,7 +3,7 @@
 
 require 'xcodeproj'
 
-project_path = 'Wims/Wims.xcodeproj'
+project_path = 'Wims.xcodeproj'
 project = Xcodeproj::Project.open(project_path)
 
 # Find the main target
