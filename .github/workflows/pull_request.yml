@@ -124,6 +124,9 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true  # Runs 'bundle install' and caches gems
 
+      - name: Install Dependencies
+        run: bundle install
+
       - name: Build with Fastlane
         run: bundle exec fastlane build_app
 
@@ -147,6 +150,9 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
+
+      - name: Install Dependencies
+        run: bundle install
 
       - name: Run Unit Tests
         run: bundle exec fastlane test_unit
@@ -194,6 +200,9 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
+      - name: Install Dependencies
+        run: bundle install
+
       - name: Run UI Tests
         run: bundle exec fastlane test_ui
 
@@ -229,6 +238,9 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
+
+      - name: Install Dependencies
+        run: bundle install
 
       - name: Install SwiftLint (for Danger plugin)
         run: brew install swiftlint

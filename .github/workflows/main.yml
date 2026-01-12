@@ -26,6 +26,9 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
+      - name: Install Dependencies
+        run: bundle install
+
       - name: Install SwiftLint
         run: brew install swiftlint
 
