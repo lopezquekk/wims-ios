@@ -1,5 +1,5 @@
 # SwiftLint Configuration for wims-ios
-# Swift 6.2, iOS 17+, Swift Testing framework
+# Swift 6.0+, iOS 17+, Swift Testing framework
 
 # Paths to include/exclude
 included:

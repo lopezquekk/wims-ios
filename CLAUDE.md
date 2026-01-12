@@ -258,7 +258,7 @@ private func createInMemoryContainer() throws -> ModelContainer {
 
 - **Minimum iOS**: 17.0 (required for SwiftData)
 - **Minimum macOS**: 14.0 (for package compatibility)
-- **Swift**: 6.2 toolchain
+- **Swift**: 6.0+ toolchain
 - **Xcode**: Latest version with iOS 17+ SDK
 
 ## Dependencies

@@ -27,8 +27,8 @@ See [CLAUDE.md](CLAUDE.md) for detailed architecture documentation.
 ## Requirements
 
 - iOS 17.0+
-- Xcode 16.2+
-- Swift 6.2
+- Xcode 16+
+- Swift 6.0+
 
 ## Development
 
