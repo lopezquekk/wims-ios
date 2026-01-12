@@ -11,7 +11,6 @@ import SwiftData
 @available(iOS 17, *)
 @Model
 final class Box {
-
     @Attribute(.unique)
     var id: UUID
 

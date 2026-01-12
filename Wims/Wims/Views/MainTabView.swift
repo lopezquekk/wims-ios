@@ -5,11 +5,10 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
-import SwiftUI
 import PersistencyLayer
+import SwiftUI
 
 struct MainTabView: View {
-
     @State private var selectedTab = 0
 
     // Repository instances

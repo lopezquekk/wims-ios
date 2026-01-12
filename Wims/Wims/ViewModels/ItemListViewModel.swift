@@ -5,13 +5,12 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
-import SwiftUI
-import PersistencyLayer
 import Combine
+import PersistencyLayer
+import SwiftUI
 
 @MainActor
 final class ItemListViewModel: ObservableObject {
-
     private let itemRepository: ItemRepository
 
     @Published var items: [ItemDTO] = []

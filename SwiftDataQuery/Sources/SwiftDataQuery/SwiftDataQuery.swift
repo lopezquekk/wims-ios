@@ -8,7 +8,6 @@ import SwiftData
 @propertyWrapper
 @MainActor
 public final class SwiftDataQueryDTO<Model: PersistentModel, DTO: Sendable>: ObservableObject {
-
     @Published public var wrappedValue: [DTO] = []
 
     private let actor: SwiftDataBackgroundActor
@@ -43,7 +42,6 @@ public final class SwiftDataQueryDTO<Model: PersistentModel, DTO: Sendable>: Obs
 @available(iOS 17, *)
 @ModelActor
 actor SwiftDataBackgroundActor {
-
     func fetch<Model: PersistentModel, DTO: Sendable>(
         descriptor: FetchDescriptor<Model>,
         map: @Sendable (Model) -> DTO

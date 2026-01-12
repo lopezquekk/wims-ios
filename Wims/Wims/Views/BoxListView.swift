@@ -5,11 +5,10 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
-import SwiftUI
 import PersistencyLayer
+import SwiftUI
 
 struct BoxListView: View {
-
     @StateObject private var viewModel: BoxListViewModel
     @State private var showingQRScanner = false
     @State private var qrCodeInput = ""

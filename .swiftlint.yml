@@ -12,12 +12,12 @@ included:
 excluded:
   - Wims/Wims.xcodeproj
   - Wims/Wims/Assets.xcassets
-  - PersistencyLayer/.build
-  - SwiftDataQuery/.build
+  - "**/.build"
   - .build
   - Pods
   - Carthage
   - .git
+  - "**/*.derived"
 
 # Enabled Rules
 opt_in_rules:
@@ -39,7 +39,6 @@ opt_in_rules:
   - first_where
   - flatmap_over_map_reduce
   - identical_operands
-  - implicit_return
   - joined_default_parameter
   - last_where
   - legacy_multiple
@@ -81,8 +80,9 @@ opt_in_rules:
 # Disabled Rules
 disabled_rules:
   - todo
-  - line_length  # Will configure below
   - trailing_whitespace
+  - trailing_comma
+  - implicit_return
 
 # Rule Configurations
 line_length:

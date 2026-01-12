@@ -5,13 +5,12 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
-import SwiftUI
 import PersistencyLayer
+import SwiftUI
 
 @MainActor
 @Observable
 final class BuildingListViewModel {
-
     private let buildingRepository: BuildingRepository
 
     var buildings: [BuildingDTO] = []

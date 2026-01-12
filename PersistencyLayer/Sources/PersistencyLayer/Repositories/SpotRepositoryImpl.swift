@@ -1,10 +1,8 @@
-
-import SwiftData
 import Foundation
+import SwiftData
 
 @available(iOS 17, *)
 public actor SpotRepositoryImpl: SpotRepository {
-
     public let modelContainer: ModelContainer
 
     public init(container: ModelContainer) {
