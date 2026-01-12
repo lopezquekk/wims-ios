@@ -59,14 +59,17 @@ platform :ios do
   lane :build_app do
     clear_derived_data if is_ci
 
-    xcodebuild(
+    gym(
       project: project_path,
       scheme: SCHEME,
       destination: DESTINATION,
       configuration: "Debug",
-      derivedDataPath: derived_data_path,
+      derived_data_path: derived_data_path,
       clean: is_ci,
-      build: true
+      output_directory: "build/artifacts",
+      skip_codesigning: true,
+      skip_package_ipa: true,
+      build_path: "build"
     )
   end
 
