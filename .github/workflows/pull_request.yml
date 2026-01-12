@@ -213,6 +213,11 @@ jobs:
     runs-on: macos-14
     if: github.event.pull_request.draft == false  # Skip for draft PRs
 
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
