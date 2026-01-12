@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		C35A69042F037AE500447267 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = C35A69032F037AE500447267 /* Algorithms */; };
+		C37AB2BE2F09AFFE008CE98D /* PersistencyLayer in Frameworks */ = {isa = PBXBuildFile; productRef = C37AB2BD2F09AFFE008CE98D /* PersistencyLayer */; };
+		C37AB2C12F09B00E008CE98D /* SwiftDataQuery in Frameworks */ = {isa = PBXBuildFile; productRef = C37AB2C02F09B00E008CE98D /* SwiftDataQuery */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,6 +33,8 @@
 		C35A68D62F037A9F00447267 /* Wims.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wims.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C35A68E52F037AA000447267 /* WimsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WimsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C35A68EF2F037AA000447267 /* WimsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WimsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C37AB2BA2F089DE5008CE98D /* SwiftDataQuery */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = SwiftDataQuery; path = ../SwiftDataQuery; sourceTree = SOURCE_ROOT; };
+		C37AB2BB2F089F7B008CE98D /* PersistencyLayer */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = PersistencyLayer; path = ../PersistencyLayer; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -56,7 +60,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C37AB2BE2F09AFFE008CE98D /* PersistencyLayer in Frameworks */,
 				C35A69042F037AE500447267 /* Algorithms in Frameworks */,
+				C37AB2C12F09B00E008CE98D /* SwiftDataQuery in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -80,6 +86,8 @@
 		C35A68CD2F037A9F00447267 = {
 			isa = PBXGroup;
 			children = (
+				C37AB2BB2F089F7B008CE98D /* PersistencyLayer */,
+				C37AB2BA2F089DE5008CE98D /* SwiftDataQuery */,
 				C35A68D82F037A9F00447267 /* Wims */,
 				C35A68E82F037AA000447267 /* WimsTests */,
 				C35A68F22F037AA000447267 /* WimsUITests */,
@@ -118,6 +126,8 @@
 			name = Wims;
 			packageProductDependencies = (
 				C35A69032F037AE500447267 /* Algorithms */,
+				C37AB2BD2F09AFFE008CE98D /* PersistencyLayer */,
+				C37AB2C02F09B00E008CE98D /* SwiftDataQuery */,
 			);
 			productName = Wims;
 			productReference = C35A68D62F037A9F00447267 /* Wims.app */;
@@ -203,6 +213,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				C35A69022F037AE500447267 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				C37AB2BC2F09AFFE008CE98D /* XCLocalSwiftPackageReference "../PersistencyLayer" */,
+				C37AB2BF2F09B00E008CE98D /* XCLocalSwiftPackageReference "../SwiftDataQuery" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C35A68D72F037A9F00447267 /* Products */;
@@ -404,6 +416,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44BJVN4V77;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -423,7 +436,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -435,6 +448,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 44BJVN4V77;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -454,7 +468,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -580,6 +594,17 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		C37AB2BC2F09AFFE008CE98D /* XCLocalSwiftPackageReference "../PersistencyLayer" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../PersistencyLayer;
+		};
+		C37AB2BF2F09B00E008CE98D /* XCLocalSwiftPackageReference "../SwiftDataQuery" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../SwiftDataQuery;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		C35A69022F037AE500447267 /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -596,6 +621,14 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C35A69022F037AE500447267 /* XCRemoteSwiftPackageReference "swift-algorithms" */;
 			productName = Algorithms;
+		};
+		C37AB2BD2F09AFFE008CE98D /* PersistencyLayer */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PersistencyLayer;
+		};
+		C37AB2C02F09B00E008CE98D /* SwiftDataQuery */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftDataQuery;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
