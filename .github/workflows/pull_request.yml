@@ -1,0 +1,234 @@
+name: Pull Request CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Cancel in-progress runs when a new commit is pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # ========================================
+  # Job 1: SwiftLint
+  # ========================================
+  lint:
+    name: SwiftLint
+    runs-on: macos-14  # macOS-latest with Xcode 16+
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for Danger
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Run SwiftLint
+        run: swiftlint lint --strict --reporter github-actions-logging
+
+  # ========================================
+  # Job 2: Build Swift Packages
+  # ========================================
+  build-packages:
+    name: Build Swift Packages
+    runs-on: macos-14
+
+    strategy:
+      matrix:
+        package: [PersistencyLayer, SwiftDataQuery]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      - name: Build ${{ matrix.package }}
+        run: |
+          cd ${{ matrix.package }}
+          swift build -v
+
+  # ========================================
+  # Job 3: Test Swift Packages
+  # ========================================
+  test-packages:
+    name: Test Swift Packages
+    runs-on: macos-14
+    needs: build-packages
+
+    strategy:
+      matrix:
+        package: [PersistencyLayer, SwiftDataQuery]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      - name: Test ${{ matrix.package }}
+        run: |
+          cd ${{ matrix.package }}
+          swift test --enable-code-coverage --parallel
+
+      - name: Generate coverage for ${{ matrix.package }}
+        if: matrix.package == 'PersistencyLayer'  # Only for main package
+        run: |
+          cd ${{ matrix.package }}
+          xcrun llvm-cov export -format="lcov" \
+            .build/debug/${{ matrix.package }}PackageTests.xctest/Contents/MacOS/${{ matrix.package }}PackageTests \
+            -instr-profile .build/debug/codecov/default.profdata > coverage.lcov
+
+      - name: Upload package coverage
+        if: matrix.package == 'PersistencyLayer'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ matrix.package }}/coverage.lcov
+          flags: ${{ matrix.package }}
+          name: ${{ matrix.package }}-coverage
+
+  # ========================================
+  # Job 4: Build iOS App
+  # ========================================
+  build-app:
+    name: Build iOS App
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      - name: Cache DerivedData
+        uses: actions/cache@v4
+        with:
+          path: build/DerivedData
+          key: ${{ runner.os }}-deriveddata-${{ hashFiles('**/Wims.xcodeproj/project.pbxproj') }}
+          restore-keys: |
+            ${{ runner.os }}-deriveddata-
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true  # Runs 'bundle install' and caches gems
+
+      - name: Build with Fastlane
+        run: bundle exec fastlane build_app
+
+  # ========================================
+  # Job 5: Unit Tests
+  # ========================================
+  test-unit:
+    name: Unit Tests
+    runs-on: macos-14
+    needs: build-app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Run Unit Tests
+        run: bundle exec fastlane test_unit
+
+      - name: Generate Coverage Report
+        if: always()
+        run: bundle exec fastlane coverage
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/coverage/cobertura.xml
+          flags: unit-tests
+          name: app-unit-coverage
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit
+          path: build/test_output/
+          retention-days: 7
+
+  # ========================================
+  # Job 6: UI Tests (Optional, runs on label)
+  # ========================================
+  test-ui:
+    name: UI Tests
+    runs-on: macos-14
+    # Only run if PR has 'run-ui-tests' label (UI tests are slow)
+    if: contains(github.event.pull_request.labels.*.name, 'run-ui-tests')
+    needs: build-app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Run UI Tests
+        run: bundle exec fastlane test_ui
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-ui
+          path: build/test_output/
+          retention-days: 7
+
+  # ========================================
+  # Job 7: Danger PR Review
+  # ========================================
+  danger:
+    name: Danger Code Review
+    runs-on: macos-14
+    if: github.event.pull_request.draft == false  # Skip for draft PRs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git commands in Danger
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Install SwiftLint (for Danger plugin)
+        run: brew install swiftlint
+
+      - name: Run Danger
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bundle exec danger

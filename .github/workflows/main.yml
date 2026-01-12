@@ -1,0 +1,54 @@
+name: Main Branch CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # ========================================
+  # Full CI Pipeline on Main
+  # ========================================
+  full-ci:
+    name: Full CI Pipeline
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Run Full CI
+        run: bundle exec fastlane ci
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Full Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/coverage/cobertura.xml
+          flags: full-suite
+          name: main-branch-coverage
+
+      - name: Upload Build Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            build/test_output/
+            build/coverage/
+            build/logs/
+          retention-days: 30

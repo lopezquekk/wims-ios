@@ -1,0 +1,46 @@
+# Codecov Configuration for wims-ios
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...90"  # Yellow from 60-90%, green 90%+
+
+  status:
+    project:
+      default:
+        target: 70%       # Overall project target
+        threshold: 2%     # Allow 2% drop
+        if_ci_failed: error
+
+    patch:
+      default:
+        target: 80%       # New code should be well-tested
+        threshold: 5%
+        if_ci_failed: error
+
+flags:
+  unit-tests:
+    paths:
+      - Wims/Wims/
+    carryforward: true
+
+  PersistencyLayer:
+    paths:
+      - PersistencyLayer/Sources/
+    carryforward: true
+
+  full-suite:
+    carryforward: true
+
+ignore:
+  - "**/*Tests.swift"
+  - "**/WimsUITests/**"
+  - "**/WimsApp.swift"
+  - "**/*.xcodeproj"
+  - "**/Assets.xcassets"
+  - "**/.build/**"
+
+comment:
+  layout: "header, diff, flags, files"
+  behavior: default
+  require_changes: false

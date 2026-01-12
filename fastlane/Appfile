@@ -1,0 +1,4 @@
+# Appfile for wims-ios
+# Not using App Store Connect, so minimal configuration
+
+app_identifier("com.yourcompany.wims")  # Update with actual bundle ID
