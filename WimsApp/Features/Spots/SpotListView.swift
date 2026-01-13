@@ -11,13 +11,13 @@ import SwiftUI
 struct SpotListView: View {
     let room: RoomDTO
 
-    @State private var spotReducer: Reducer<SpotListViewModel>
+    @State private var spotReducer: Reducer<SpotListReducer>
 
     init(room: RoomDTO) {
         self.room = room
         self._spotReducer = State(
             wrappedValue: .init(
-                reducer: SpotListViewModel(
+                reducer: SpotListReducer(
                     spotRepository: SpotRepositoryImpl(
                         container: sharedModelContainer
                     ),
@@ -174,9 +174,9 @@ struct SpotRowView: View {
 struct SpotDetailView: View {
     let spot: SpotDTO
     let room: RoomDTO
-    @State var spotReducer: Reducer<SpotListViewModel>
+    @State var spotReducer: Reducer<SpotListReducer>
 
-    init(spot: SpotDTO, spotReducer: Reducer<SpotListViewModel>, room: RoomDTO) {
+    init(spot: SpotDTO, spotReducer: Reducer<SpotListReducer>, room: RoomDTO) {
         self.spot = spot
         self.spotReducer = spotReducer
         self.room = room
@@ -344,7 +344,7 @@ struct SpotDetailView: View {
 
 struct EditSpotSheet: View {
     let spot: SpotDTO
-    @State var spotReducer: Reducer<SpotListViewModel>
+    @State var spotReducer: Reducer<SpotListReducer>
 
     @Environment(\.dismiss) private var dismiss
 

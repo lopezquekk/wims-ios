@@ -1,5 +1,5 @@
 //
-//  RoomListViewModel.swift
+//  RoomListReducer.swift
 //  Wims
 //
 //  Created by Camilo Lopez on 1/11/26.
@@ -10,7 +10,7 @@ import PersistencyLayer
 import SwiftUI
 
 @MainActor
-struct RoomListViewModel: ReducerProtocol {
+struct RoomListReducer: ReducerProtocol {
     struct State: Sendable {
         // Room list state
         var rooms: [RoomDTO] = []

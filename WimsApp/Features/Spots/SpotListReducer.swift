@@ -1,5 +1,5 @@
 //
-//  SpotListViewModel.swift
+//  SpotListReducer.swift
 //  Wims
 //
 //  Created by Camilo Lopez on 1/11/26.
@@ -10,7 +10,7 @@ import PersistencyLayer
 import SwiftUI
 
 @MainActor
-struct SpotListViewModel: ReducerProtocol {
+struct SpotListReducer: ReducerProtocol {
     struct State: Sendable {
         // Spot list state
         var spots: [SpotDTO] = []

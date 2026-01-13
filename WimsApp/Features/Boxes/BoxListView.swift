@@ -9,12 +9,12 @@ import PersistencyLayer
 import SwiftUI
 
 struct BoxListView: View {
-    @State private var boxReducer: Reducer<BoxListViewModel>
+    @State private var boxReducer: Reducer<BoxListReducer>
 
     init(boxRepository: BoxRepository) {
         self._boxReducer = State(
             wrappedValue: .init(
-                reducer: BoxListViewModel(boxRepository: boxRepository),
+                reducer: BoxListReducer(boxRepository: boxRepository),
                 initialState: .init()
             )
         )
@@ -203,13 +203,13 @@ struct BoxRowView: View {
 struct BoxDetailView: View {
     let box: BoxDTO
 
-    @State private var itemReducer: Reducer<ItemListViewModel>
+    @State private var itemReducer: Reducer<ItemListReducer>
 
     init(box: BoxDTO) {
         self.box = box
         self._itemReducer = State(
             wrappedValue: .init(
-                reducer: ItemListViewModel(itemRepository: ItemRepositoryImpl(container: sharedModelContainer)),
+                reducer: ItemListReducer(itemRepository: ItemRepositoryImpl(container: sharedModelContainer)),
                 initialState: .init()
             )
         )

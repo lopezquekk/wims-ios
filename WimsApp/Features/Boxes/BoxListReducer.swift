@@ -1,5 +1,5 @@
 //
-//  BoxListViewModel.swift
+//  BoxListReducer.swift
 //  Wims
 //
 //  Created by Camilo Lopez on 1/11/26.
@@ -10,7 +10,7 @@ import PersistencyLayer
 import SwiftUI
 
 @MainActor
-struct BoxListViewModel: ReducerProtocol {
+struct BoxListReducer: ReducerProtocol {
     struct State: Sendable {
         // Box list state
         var boxes: [BoxDTO] = []

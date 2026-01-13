@@ -10,6 +10,8 @@
 		C35A69042F037AE500447267 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = C35A69032F037AE500447267 /* Algorithms */; };
 		C37AB2BE2F09AFFE008CE98D /* PersistencyLayer in Frameworks */ = {isa = PBXBuildFile; productRef = C37AB2BD2F09AFFE008CE98D /* PersistencyLayer */; };
 		C37AB2C12F09B00E008CE98D /* SwiftDataQuery in Frameworks */ = {isa = PBXBuildFile; productRef = C37AB2C02F09B00E008CE98D /* SwiftDataQuery */; };
+		C3BFA5772F16547600D528ED /* FactoryKit in Frameworks */ = {isa = PBXBuildFile; productRef = C3BFA5762F16547600D528ED /* FactoryKit */; };
+		C3BFA5792F16547600D528ED /* FactoryTesting in Frameworks */ = {isa = PBXBuildFile; productRef = C3BFA5782F16547600D528ED /* FactoryTesting */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +64,7 @@
 			files = (
 				C37AB2BE2F09AFFE008CE98D /* PersistencyLayer in Frameworks */,
 				C35A69042F037AE500447267 /* Algorithms in Frameworks */,
+				C3BFA5772F16547600D528ED /* FactoryKit in Frameworks */,
 				C37AB2C12F09B00E008CE98D /* SwiftDataQuery in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -70,6 +73,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3BFA5792F16547600D528ED /* FactoryTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -129,6 +133,7 @@
 				C35A69032F037AE500447267 /* Algorithms */,
 				C37AB2BD2F09AFFE008CE98D /* PersistencyLayer */,
 				C37AB2C02F09B00E008CE98D /* SwiftDataQuery */,
+				C3BFA5762F16547600D528ED /* FactoryKit */,
 			);
 			productName = Wims;
 			productReference = C35A68D62F037A9F00447267 /* Wims.app */;
@@ -152,6 +157,7 @@
 			);
 			name = WimsTests;
 			packageProductDependencies = (
+				C3BFA5782F16547600D528ED /* FactoryTesting */,
 			);
 			productName = WimsTests;
 			productReference = C35A68E52F037AA000447267 /* WimsTests.xctest */;
@@ -216,6 +222,7 @@
 				C35A69022F037AE500447267 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
 				C37AB2BC2F09AFFE008CE98D /* XCLocalSwiftPackageReference "./PersistencyLayer" */,
 				C37AB2BF2F09B00E008CE98D /* XCLocalSwiftPackageReference "./SwiftDataQuery" */,
+				C3BFA5752F16547600D528ED /* XCRemoteSwiftPackageReference "Factory" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C35A68D72F037A9F00447267 /* Products */;
@@ -637,6 +644,14 @@
 				minimumVersion = 1.2.1;
 			};
 		};
+		C3BFA5752F16547600D528ED /* XCRemoteSwiftPackageReference "Factory" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/hmlongco/Factory";
+			requirement = {
+				kind = exactVersion;
+				version = 2.5.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -652,6 +667,16 @@
 		C37AB2C02F09B00E008CE98D /* SwiftDataQuery */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftDataQuery;
+		};
+		C3BFA5762F16547600D528ED /* FactoryKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3BFA5752F16547600D528ED /* XCRemoteSwiftPackageReference "Factory" */;
+			productName = FactoryKit;
+		};
+		C3BFA5782F16547600D528ED /* FactoryTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3BFA5752F16547600D528ED /* XCRemoteSwiftPackageReference "Factory" */;
+			productName = FactoryTesting;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

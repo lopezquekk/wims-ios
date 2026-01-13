@@ -1,5 +1,5 @@
 //
-//  ItemListViewModel.swift
+//  ItemListReducer.swift
 //  Wims
 //
 //  Created by Camilo Lopez on 1/11/26.
@@ -10,7 +10,7 @@ import PersistencyLayer
 import SwiftUI
 
 @MainActor
-struct ItemListViewModel: ReducerProtocol {
+struct ItemListReducer: ReducerProtocol {
     struct State: Sendable {
         // Item list state
         var items: [ItemDTO] = []

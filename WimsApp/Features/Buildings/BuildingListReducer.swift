@@ -1,5 +1,5 @@
 //
-//  BuildingListViewModel.swift
+//  BuildingListReducer.swift
 //  Wims
 //
 //  Created by Camilo Lopez on 1/11/26.
@@ -9,7 +9,7 @@ import PersistencyLayer
 import SwiftUI
 
 @MainActor
-struct BuildingListViewModel: ReducerProtocol {
+struct BuildingListReducer: ReducerProtocol {
     struct State: Sendable {
         // Building list state
         var buildings: [BuildingDTO] = []

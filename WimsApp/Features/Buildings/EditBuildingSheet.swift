@@ -10,7 +10,7 @@ import SwiftUI
 
 struct EditBuildingSheet: View {
     let building: BuildingDTO
-    @State var buildingReducer: Reducer<BuildingListViewModel>
+    @State var buildingReducer: Reducer<BuildingListReducer>
 
     @Environment(\.dismiss) private var dismiss
 
@@ -67,7 +67,7 @@ struct EditBuildingSheet: View {
 
 #Preview {
     @Previewable @State var reducer = Reducer(
-        reducer: BuildingListViewModel(
+        reducer: BuildingListReducer(
             buildingRepository: BuildingRepositoryImpl(container: sharedModelContainer)
         ),
         initialState: .init()

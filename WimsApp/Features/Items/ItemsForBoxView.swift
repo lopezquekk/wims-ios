@@ -12,14 +12,14 @@ import SwiftUI
 struct ItemsForBoxView: View {
     let box: BoxDTO
 
-    @State private var itemReducer: Reducer<ItemListViewModel>
+    @State private var itemReducer: Reducer<ItemListReducer>
     @State private var newItemImage: PhotosPickerItem?
 
     init(box: BoxDTO) {
         self.box = box
         self._itemReducer = State(
             wrappedValue: .init(
-                reducer: ItemListViewModel(itemRepository: ItemRepositoryImpl(container: sharedModelContainer)),
+                reducer: ItemListReducer(itemRepository: ItemRepositoryImpl(container: sharedModelContainer)),
                 initialState: .init()
             )
         )
@@ -254,10 +254,10 @@ struct ItemForBoxRowView: View {
 
 struct ItemForBoxDetailView: View {
     let item: ItemDTO
-    @State private var itemReducer: Reducer<ItemListViewModel>
+    @State private var itemReducer: Reducer<ItemListReducer>
     @State private var showingEditSheet = false
 
-    init(item: ItemDTO, itemReducer: Reducer<ItemListViewModel>) {
+    init(item: ItemDTO, itemReducer: Reducer<ItemListReducer>) {
         self.item = item
         self.itemReducer = itemReducer
     }
@@ -354,7 +354,7 @@ struct ItemForBoxDetailView: View {
 
 struct EditItemSheet: View {
     let item: ItemDTO
-    @State private var itemReducer: Reducer<ItemListViewModel>
+    @State private var itemReducer: Reducer<ItemListReducer>
 
     @Environment(\.dismiss) private var dismiss
     @State private var itemName: String
@@ -362,7 +362,7 @@ struct EditItemSheet: View {
     @State private var selectedImage: PhotosPickerItem?
     @State private var imageData: Data?
 
-    init(item: ItemDTO, itemReducer: Reducer<ItemListViewModel>) {
+    init(item: ItemDTO, itemReducer: Reducer<ItemListReducer>) {
         self.item = item
         self.itemReducer = itemReducer
         self._itemName = State(initialValue: item.name)

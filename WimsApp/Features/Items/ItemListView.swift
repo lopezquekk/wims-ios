@@ -10,12 +10,12 @@ import PhotosUI
 import SwiftUI
 
 struct ItemListView: View {
-    @State private var itemReducer: Reducer<ItemListViewModel>
+    @State private var itemReducer: Reducer<ItemListReducer>
 
     init(itemRepository: ItemRepository) {
         self._itemReducer = State(
             wrappedValue: .init(
-                reducer: ItemListViewModel(itemRepository: itemRepository),
+                reducer: ItemListReducer(itemRepository: itemRepository),
                 initialState: .init()
             )
         )
@@ -167,7 +167,7 @@ struct ItemRowView: View {
 
 struct ItemDetailView: View {
     let item: ItemDTO
-    @State var itemReducer: Reducer<ItemListViewModel>
+    @State var itemReducer: Reducer<ItemListReducer>
 
     var body: some View {
         List {
@@ -274,7 +274,7 @@ struct ItemDetailView: View {
 // MARK: - Add Item Sheet
 
 struct AddItemFromTabSheet: View {
-    @State var itemReducer: Reducer<ItemListViewModel>
+    @State var itemReducer: Reducer<ItemListReducer>
     @Environment(\.dismiss) private var dismiss
 
     @State private var buildings: [BuildingDTO] = []
@@ -508,7 +508,7 @@ struct AddItemFromTabSheet: View {
 
 struct EditItemFromListSheet: View {
     let item: ItemDTO
-    @State var itemReducer: Reducer<ItemListViewModel>
+    @State var itemReducer: Reducer<ItemListReducer>
 
     @Environment(\.dismiss) private var dismiss
     @State private var selectedImage: PhotosPickerItem?

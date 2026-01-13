@@ -9,12 +9,12 @@ import PersistencyLayer
 import SwiftUI
 
 struct BuildingListView: View {
-    @State private var buildingReducer: Reducer<BuildingListViewModel>
+    @State private var buildingReducer: Reducer<BuildingListReducer>
 
     init(buildingRepository: BuildingRepository) {
         self._buildingReducer = State(
             wrappedValue: .init(
-                reducer: BuildingListViewModel(buildingRepository: buildingRepository),
+                reducer: BuildingListReducer(buildingRepository: buildingRepository),
                 initialState: .init()
             )
         )
@@ -175,15 +175,15 @@ struct BuildingRowView: View {
 
 struct BuildingDetailView: View {
     let building: BuildingDTO
-    @State var buildingReducer: Reducer<BuildingListViewModel>
-    @State private var roomReducer: Reducer<RoomListViewModel>
+    @State var buildingReducer: Reducer<BuildingListReducer>
+    @State private var roomReducer: Reducer<RoomListReducer>
 
-    init(building: BuildingDTO, buildingReducer: Reducer<BuildingListViewModel>) {
+    init(building: BuildingDTO, buildingReducer: Reducer<BuildingListReducer>) {
         self.building = building
         self.buildingReducer = buildingReducer
         self._roomReducer = State(
             wrappedValue: .init(
-                reducer: RoomListViewModel(
+                reducer: RoomListReducer(
                     roomRepository: RoomRepositoryImpl(container: sharedModelContainer)
                 ),
                 initialState: .init()
