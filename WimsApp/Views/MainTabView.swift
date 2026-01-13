@@ -37,7 +37,7 @@ struct MainTabView: View {
             .tag(0)
 
             ItemListView(
-                viewModel: ItemListViewModel(itemRepository: itemRepository)
+                itemRepository: itemRepository
             )
             .tabItem {
                 Label("Items", systemImage: "list.bullet.rectangle")

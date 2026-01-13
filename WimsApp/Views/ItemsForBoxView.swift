@@ -12,18 +12,17 @@ import SwiftUI
 struct ItemsForBoxView: View {
     let box: BoxDTO
 
-    @State private var viewModel: ItemListViewModel
-    @State private var showingAddDialog = false
-    @State private var newItemName = ""
-    @State private var newItemNotes = ""
+    @State private var itemReducer: Reducer<ItemListViewModel>
     @State private var newItemImage: PhotosPickerItem?
-    @State private var newItemImageData: Data?
 
     init(box: BoxDTO) {
         self.box = box
-        self._viewModel = State(wrappedValue: ItemListViewModel(
-            itemRepository: ItemRepositoryImpl(container: sharedModelContainer)
-        ))
+        self._itemReducer = State(
+            wrappedValue: .init(
+                reducer: ItemListViewModel(itemRepository: ItemRepositoryImpl(container: sharedModelContainer)),
+                initialState: .init()
+            )
+        )
     }
 
     var body: some View {
@@ -34,19 +33,26 @@ struct ItemsForBoxView: View {
                     addButton
                 }
             }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            .alert("Error", isPresented: .constant(itemReducer.errorMessage != nil)) {
                 Button("OK") {
-                    viewModel.errorMessage = nil
+                    // Error will be cleared by reducer
                 }
             } message: {
-                if let error = viewModel.errorMessage {
+                if let error = itemReducer.errorMessage {
                     Text(error)
                 }
             }
             .task {
-                await viewModel.load(for: box)
+                await itemReducer.send(action: .load(box: box))
             }
-            .sheet(isPresented: $showingAddDialog) {
+            .sheet(isPresented: .init(
+                get: { itemReducer.showingAddItemDialog },
+                set: { newValue in
+                    Task {
+                        await itemReducer.send(action: .setShowingAddItemDialog(newValue))
+                    }
+                }
+            )) {
                 addItemSheet
             }
     }
@@ -55,22 +61,22 @@ struct ItemsForBoxView: View {
 
     private var itemsList: some View {
         Group {
-            if viewModel.isLoading {
+            if itemReducer.isLoading {
                 ProgressView("Loading items...")
-            } else if viewModel.items.isEmpty {
+            } else if itemReducer.items.isEmpty {
                 emptyState
             } else {
                 List {
-                    ForEach(viewModel.items) { item in
+                    ForEach(itemReducer.items) { item in
                         NavigationLink {
-                            ItemForBoxDetailView(item: item, viewModel: viewModel)
+                            ItemForBoxDetailView(item: item, itemReducer: itemReducer)
                         } label: {
                             ItemForBoxRowView(item: item)
                         }
                     }
                     .onDelete { offsets in
                         Task {
-                            await viewModel.deleteItems(at: offsets)
+                            await itemReducer.send(action: .deleteItems(offsets: offsets))
                         }
                     }
                 }
@@ -85,14 +91,18 @@ struct ItemsForBoxView: View {
             Text("Add your first item to get started")
         } actions: {
             Button("Add Item") {
-                showingAddDialog = true
+                Task {
+                    await itemReducer.send(action: .setShowingAddItemDialog(true))
+                }
             }
         }
     }
 
     private var addButton: some View {
         Button {
-            showingAddDialog = true
+            Task {
+                await itemReducer.send(action: .setShowingAddItemDialog(true))
+            }
         } label: {
             Label("Add Item", systemImage: "plus")
         }
@@ -102,9 +112,23 @@ struct ItemsForBoxView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Item Name", text: $newItemName)
+                    TextField("Item Name", text: .init(
+                        get: { itemReducer.newItemName },
+                        set: { newValue in
+                            Task {
+                                await itemReducer.send(action: .setNewItemName(newValue))
+                            }
+                        }
+                    ))
                         .textInputAutocapitalization(.words)
-                    TextField("Notes (optional)", text: $newItemNotes, axis: .vertical)
+                    TextField("Notes (optional)", text: .init(
+                        get: { itemReducer.newItemNotes },
+                        set: { newValue in
+                            Task {
+                                await itemReducer.send(action: .setNewItemNotes(newValue))
+                            }
+                        }
+                    ), axis: .vertical)
                         .lineLimit(3...6)
                 } header: {
                     Text("Item Information")
@@ -115,7 +139,7 @@ struct ItemsForBoxView: View {
                         HStack {
                             Label("Add Photo", systemImage: "photo")
                             Spacer()
-                            if newItemImageData != nil {
+                            if itemReducer.newItemImageData != nil {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundStyle(.green)
                             }
@@ -124,18 +148,27 @@ struct ItemsForBoxView: View {
                     .onChange(of: newItemImage) { _, newValue in
                         Task {
                             if let data = try? await newValue?.loadTransferable(type: Data.self) {
-                                newItemImageData = data
+                                await itemReducer.send(action: .setNewItemImageData(data))
                             }
                         }
                     }
 
-                    if let imageData = newItemImageData,
+                    if let imageData = itemReducer.newItemImageData,
                        let uiImage = UIImage(data: imageData) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .scaledToFit()
                             .frame(maxHeight: 200)
                             .cornerRadius(8)
+
+                        Button(role: .destructive) {
+                            Task {
+                                await itemReducer.send(action: .setNewItemImageData(nil))
+                            }
+                            newItemImage = nil
+                        } label: {
+                            Label("Remove Photo", systemImage: "trash")
+                        }
                     }
                 } header: {
                     Text("Photo")
@@ -146,35 +179,27 @@ struct ItemsForBoxView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        showingAddDialog = false
-                        resetAddForm()
+                        Task {
+                            await itemReducer.send(action: .setShowingAddItemDialog(false))
+                        }
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         Task {
-                            await viewModel.addItem(
-                                name: newItemName,
-                                notes: newItemNotes.isEmpty ? nil : newItemNotes,
-                                imageData: newItemImageData,
-                                in: box
-                            )
-                            showingAddDialog = false
-                            resetAddForm()
+                            await itemReducer.send(action: .addItem(
+                                name: itemReducer.newItemName,
+                                notes: itemReducer.newItemNotes.isEmpty ? nil : itemReducer.newItemNotes,
+                                imageData: itemReducer.newItemImageData,
+                                box: box
+                            ))
                         }
                     }
-                    .disabled(newItemName.isEmpty)
+                    .disabled(itemReducer.newItemName.isEmpty)
                 }
             }
         }
         .presentationDetents([.large])
-    }
-
-    private func resetAddForm() {
-        newItemName = ""
-        newItemNotes = ""
-        newItemImage = nil
-        newItemImageData = nil
     }
 }
 
@@ -229,8 +254,13 @@ struct ItemForBoxRowView: View {
 
 struct ItemForBoxDetailView: View {
     let item: ItemDTO
-    @State var viewModel: ItemListViewModel
+    @State private var itemReducer: Reducer<ItemListViewModel>
     @State private var showingEditSheet = false
+
+    init(item: ItemDTO, itemReducer: Reducer<ItemListViewModel>) {
+        self.item = item
+        self.itemReducer = itemReducer
+    }
 
     var body: some View {
         List {
@@ -317,14 +347,14 @@ struct ItemForBoxDetailView: View {
             }
         }
         .sheet(isPresented: $showingEditSheet) {
-            EditItemSheet(item: item, viewModel: viewModel)
+            EditItemSheet(item: item, itemReducer: itemReducer)
         }
     }
 }
 
 struct EditItemSheet: View {
     let item: ItemDTO
-    @State var viewModel: ItemListViewModel
+    @State private var itemReducer: Reducer<ItemListViewModel>
 
     @Environment(\.dismiss) private var dismiss
     @State private var itemName: String
@@ -332,9 +362,9 @@ struct EditItemSheet: View {
     @State private var selectedImage: PhotosPickerItem?
     @State private var imageData: Data?
 
-    init(item: ItemDTO, viewModel: ItemListViewModel) {
+    init(item: ItemDTO, itemReducer: Reducer<ItemListViewModel>) {
         self.item = item
-        self.viewModel = viewModel
+        self.itemReducer = itemReducer
         self._itemName = State(initialValue: item.name)
         self._itemNotes = State(initialValue: item.notes ?? "")
         self._imageData = State(initialValue: item.imageData)
@@ -394,12 +424,12 @@ struct EditItemSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            await viewModel.updateItem(
+                            await itemReducer.send(action: .updateItem(
                                 id: item.id,
                                 name: itemName,
                                 notes: itemNotes.isEmpty ? nil : itemNotes,
                                 imageData: imageData
-                            )
+                            ))
                             dismiss()
                         }
                     }

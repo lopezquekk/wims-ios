@@ -203,13 +203,16 @@ struct BoxRowView: View {
 struct BoxDetailView: View {
     let box: BoxDTO
 
-    @State private var itemViewModel: ItemListViewModel
+    @State private var itemReducer: Reducer<ItemListViewModel>
 
     init(box: BoxDTO) {
         self.box = box
-        self._itemViewModel = State(wrappedValue: ItemListViewModel(
-            itemRepository: ItemRepositoryImpl(container: sharedModelContainer)
-        ))
+        self._itemReducer = State(
+            wrappedValue: .init(
+                reducer: ItemListViewModel(itemRepository: ItemRepositoryImpl(container: sharedModelContainer)),
+                initialState: .init()
+            )
+        )
     }
 
     var body: some View {
@@ -262,20 +265,20 @@ struct BoxDetailView: View {
             }
 
             Section {
-                if itemViewModel.isLoading {
+                if itemReducer.isLoading {
                     HStack {
                         Spacer()
                         ProgressView()
                         Spacer()
                     }
-                } else if itemViewModel.items.isEmpty {
+                } else if itemReducer.items.isEmpty {
                     Text("No items in this box")
                         .foregroundStyle(.secondary)
                         .font(.callout)
                 } else {
-                    ForEach(itemViewModel.items) { item in
+                    ForEach(itemReducer.items) { item in
                         NavigationLink {
-                            ItemForBoxDetailView(item: item, viewModel: itemViewModel)
+                            ItemForBoxDetailView(item: item, itemReducer: itemReducer)
                         } label: {
                             HStack(spacing: 12) {
                                 if let imageData = item.imageData,
@@ -316,7 +319,7 @@ struct BoxDetailView: View {
         }
         .navigationTitle(box.label)
         .task {
-            await itemViewModel.load(for: box)
+            await itemReducer.send(action: .load(box: box))
         }
     }
 }

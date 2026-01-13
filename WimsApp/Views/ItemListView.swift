@@ -10,42 +10,64 @@ import PhotosUI
 import SwiftUI
 
 struct ItemListView: View {
-    @State private var viewModel: ItemListViewModel
+    @State private var itemReducer: Reducer<ItemListViewModel>
 
-    init(viewModel: ItemListViewModel) {
-        self._viewModel = State(wrappedValue: viewModel)
+    init(itemRepository: ItemRepository) {
+        self._itemReducer = State(
+            wrappedValue: .init(
+                reducer: ItemListViewModel(itemRepository: itemRepository),
+                initialState: .init()
+            )
+        )
     }
-
-    @State private var showingAddDialog = false
 
     var body: some View {
         NavigationStack {
             itemsList
                 .navigationTitle("Items")
-                .searchable(text: $viewModel.searchText, prompt: "Search items")
+                .searchable(
+                    text: .init(
+                        get: { itemReducer.searchText },
+                        set: { newValue in
+                            Task {
+                                await itemReducer.send(action: .setSearchText(newValue))
+                            }
+                        }
+                    ),
+                    prompt: "Search items"
+                )
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
                         Button {
-                            showingAddDialog = true
+                            Task {
+                                await itemReducer.send(action: .setShowingAddItemDialog(true))
+                            }
                         } label: {
                             Label("Add Item", systemImage: "plus")
                         }
                     }
                 }
-                .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+                .alert("Error", isPresented: .constant(itemReducer.errorMessage != nil)) {
                     Button("OK") {
-                        viewModel.errorMessage = nil
+                        // Error will be cleared by reducer
                     }
                 } message: {
-                    if let error = viewModel.errorMessage {
+                    if let error = itemReducer.errorMessage {
                         Text(error)
                     }
                 }
                 .task {
-                    await viewModel.loadAll()
+                    await itemReducer.send(action: .loadAll)
                 }
-                .sheet(isPresented: $showingAddDialog) {
-                    AddItemFromTabSheet(viewModel: viewModel)
+                .sheet(isPresented: .init(
+                    get: { itemReducer.showingAddItemDialog },
+                    set: { newValue in
+                        Task {
+                            await itemReducer.send(action: .setShowingAddItemDialog(newValue))
+                        }
+                    }
+                )) {
+                    AddItemFromTabSheet(itemReducer: itemReducer)
                 }
         }
     }
@@ -54,22 +76,22 @@ struct ItemListView: View {
 
     private var itemsList: some View {
         Group {
-            if viewModel.isLoading {
+            if itemReducer.isLoading {
                 ProgressView("Loading items...")
-            } else if viewModel.filteredItems.isEmpty {
+            } else if itemReducer.filteredItems.isEmpty {
                 emptyState
             } else {
                 List {
-                    ForEach(viewModel.filteredItems) { item in
+                    ForEach(itemReducer.filteredItems) { item in
                         NavigationLink {
-                            ItemDetailView(item: item, viewModel: viewModel)
+                            ItemDetailView(item: item, itemReducer: itemReducer)
                         } label: {
                             ItemRowView(item: item)
                         }
                     }
                     .onDelete { offsets in
                         Task {
-                            await viewModel.deleteItems(at: offsets)
+                            await itemReducer.send(action: .deleteItems(offsets: offsets))
                         }
                     }
                 }
@@ -145,8 +167,7 @@ struct ItemRowView: View {
 
 struct ItemDetailView: View {
     let item: ItemDTO
-    @State var viewModel: ItemListViewModel
-    @State private var showingEditSheet = false
+    @State var itemReducer: Reducer<ItemListViewModel>
 
     var body: some View {
         List {
@@ -228,12 +249,24 @@ struct ItemDetailView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Edit") {
-                    showingEditSheet = true
+                    Task {
+                        await itemReducer.send(action: .setShowingEditItemSheet(true))
+                        await itemReducer.send(action: .setEditItemName(item.name))
+                        await itemReducer.send(action: .setEditItemNotes(item.notes ?? ""))
+                        await itemReducer.send(action: .setEditItemImageData(item.imageData))
+                    }
                 }
             }
         }
-        .sheet(isPresented: $showingEditSheet) {
-            EditItemFromListSheet(item: item, viewModel: viewModel)
+        .sheet(isPresented: .init(
+            get: { itemReducer.showingEditItemSheet },
+            set: { newValue in
+                Task {
+                    await itemReducer.send(action: .setShowingEditItemSheet(newValue))
+                }
+            }
+        )) {
+            EditItemFromListSheet(item: item, itemReducer: itemReducer)
         }
     }
 }
@@ -241,7 +274,7 @@ struct ItemDetailView: View {
 // MARK: - Add Item Sheet
 
 struct AddItemFromTabSheet: View {
-    @State var viewModel: ItemListViewModel
+    @State var itemReducer: Reducer<ItemListViewModel>
     @Environment(\.dismiss) private var dismiss
 
     @State private var buildings: [BuildingDTO] = []
@@ -458,14 +491,14 @@ struct AddItemFromTabSheet: View {
             return
         }
 
-        await viewModel.addItem(
+        await itemReducer.send(action: .addItem(
             name: itemName,
             notes: itemNotes.isEmpty ? nil : itemNotes,
             imageData: imageData,
-            in: box
-        )
+            box: box
+        ))
 
-        if viewModel.errorMessage == nil {
+        if itemReducer.errorMessage == nil {
             dismiss()
         }
     }
@@ -475,29 +508,32 @@ struct AddItemFromTabSheet: View {
 
 struct EditItemFromListSheet: View {
     let item: ItemDTO
-    @State var viewModel: ItemListViewModel
+    @State var itemReducer: Reducer<ItemListViewModel>
 
     @Environment(\.dismiss) private var dismiss
-    @State private var itemName: String
-    @State private var itemNotes: String
     @State private var selectedImage: PhotosPickerItem?
-    @State private var imageData: Data?
-
-    init(item: ItemDTO, viewModel: ItemListViewModel) {
-        self.item = item
-        self.viewModel = viewModel
-        self._itemName = State(initialValue: item.name)
-        self._itemNotes = State(initialValue: item.notes ?? "")
-        self._imageData = State(initialValue: item.imageData)
-    }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Item Information") {
-                    TextField("Item Name", text: $itemName)
+                    TextField("Item Name", text: .init(
+                        get: { itemReducer.editItemName },
+                        set: { newValue in
+                            Task {
+                                await itemReducer.send(action: .setEditItemName(newValue))
+                            }
+                        }
+                    ))
                         .textInputAutocapitalization(.words)
-                    TextField("Notes (optional)", text: $itemNotes, axis: .vertical)
+                    TextField("Notes (optional)", text: .init(
+                        get: { itemReducer.editItemNotes },
+                        set: { newValue in
+                            Task {
+                                await itemReducer.send(action: .setEditItemNotes(newValue))
+                            }
+                        }
+                    ), axis: .vertical)
                         .lineLimit(3...6)
                 }
 
@@ -508,12 +544,12 @@ struct EditItemFromListSheet: View {
                     .onChange(of: selectedImage) { _, newValue in
                         Task {
                             if let data = try? await newValue?.loadTransferable(type: Data.self) {
-                                imageData = data
+                                await itemReducer.send(action: .setEditItemImageData(data))
                             }
                         }
                     }
 
-                    if let data = imageData, let uiImage = UIImage(data: data) {
+                    if let data = itemReducer.editItemImageData, let uiImage = UIImage(data: data) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .scaledToFit()
@@ -521,7 +557,9 @@ struct EditItemFromListSheet: View {
                             .cornerRadius(8)
 
                         Button(role: .destructive) {
-                            imageData = nil
+                            Task {
+                                await itemReducer.send(action: .setEditItemImageData(nil))
+                            }
                             selectedImage = nil
                         } label: {
                             Label("Remove Photo", systemImage: "trash")
@@ -547,16 +585,16 @@ struct EditItemFromListSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            await viewModel.updateItem(
+                            await itemReducer.send(action: .updateItem(
                                 id: item.id,
-                                name: itemName,
-                                notes: itemNotes.isEmpty ? nil : itemNotes,
-                                imageData: imageData
-                            )
+                                name: itemReducer.editItemName,
+                                notes: itemReducer.editItemNotes.isEmpty ? nil : itemReducer.editItemNotes,
+                                imageData: itemReducer.editItemImageData
+                            ))
                             dismiss()
                         }
                     }
-                    .disabled(itemName.isEmpty || hasNoChanges)
+                    .disabled(itemReducer.editItemName.isEmpty || hasNoChanges)
                 }
             }
         }
@@ -564,9 +602,9 @@ struct EditItemFromListSheet: View {
     }
 
     private var hasNoChanges: Bool {
-        itemName == item.name &&
-        (itemNotes.isEmpty ? nil : itemNotes) == item.notes &&
-        imageData == item.imageData
+        itemReducer.editItemName == item.name &&
+        (itemReducer.editItemNotes.isEmpty ? nil : itemReducer.editItemNotes) == item.notes &&
+        itemReducer.editItemImageData == item.imageData
     }
 }
 
@@ -574,10 +612,8 @@ struct EditItemFromListSheet: View {
 
 #Preview {
     ItemListView(
-        viewModel: ItemListViewModel(
-            itemRepository: ItemRepositoryImpl(
-                container: sharedModelContainer
-            )
+        itemRepository: ItemRepositoryImpl(
+            container: sharedModelContainer
         )
     )
 }
