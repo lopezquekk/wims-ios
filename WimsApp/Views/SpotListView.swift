@@ -12,8 +12,6 @@ struct SpotListView: View {
     let room: RoomDTO
 
     @State private var spotReducer: Reducer<SpotListViewModel>
-    @State private var showingAddDialog = false
-    @State private var newSpotName = ""
 
     init(room: RoomDTO) {
         self.room = room
@@ -21,6 +19,9 @@ struct SpotListView: View {
             wrappedValue: .init(
                 reducer: SpotListViewModel(
                     spotRepository: SpotRepositoryImpl(
+                        container: sharedModelContainer
+                    ),
+                    boxRepository: BoxRepositoryImpl(
                         container: sharedModelContainer
                     )
                 ),
@@ -39,7 +40,7 @@ struct SpotListView: View {
             }
             .alert("Error", isPresented: .constant(spotReducer.errorMessage != nil)) {
                 Button("OK") {
-                    // spotReducer.errorMessage = nil
+                    // Error will be cleared by reducer
                 }
             } message: {
                 if let error = spotReducer.errorMessage {
@@ -49,7 +50,14 @@ struct SpotListView: View {
             .task {
                 await spotReducer.send(action: .load(room: room))
             }
-            .sheet(isPresented: $showingAddDialog) {
+            .sheet(isPresented: .init(
+                get: { spotReducer.showingAddSpotDialog },
+                set: { newValue in
+                    Task {
+                        await spotReducer.send(action: .setShowingAddSpotDialog(newValue))
+                    }
+                }
+            )) {
                 addSpotSheet
             }
     }
@@ -66,7 +74,7 @@ struct SpotListView: View {
                 List {
                     ForEach(spotReducer.spots) { spot in
                         NavigationLink {
-                            SpotDetailView(spot: spot, spotReducer: spotReducer)
+                            SpotDetailView(spot: spot, spotReducer: spotReducer, room: room)
                         } label: {
                             SpotRowView(spot: spot)
                         }
@@ -88,14 +96,18 @@ struct SpotListView: View {
             Text("Add your first spot to get started")
         } actions: {
             Button("Add Spot") {
-                showingAddDialog = true
+                Task {
+                    await spotReducer.send(action: .setShowingAddSpotDialog(true))
+                }
             }
         }
     }
 
     private var addButton: some View {
         Button {
-            showingAddDialog = true
+            Task {
+                await spotReducer.send(action: .setShowingAddSpotDialog(true))
+            }
         } label: {
             Label("Add Spot", systemImage: "plus")
         }
@@ -105,7 +117,14 @@ struct SpotListView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Spot Name", text: $newSpotName)
+                    TextField("Spot Name", text: .init(
+                        get: { spotReducer.newSpotName },
+                        set: { newValue in
+                            Task {
+                                await spotReducer.send(action: .setNewSpotName(newValue))
+                            }
+                        }
+                    ))
                         .textInputAutocapitalization(.words)
                 } header: {
                     Text("Spot Information")
@@ -116,19 +135,18 @@ struct SpotListView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        showingAddDialog = false
-                        newSpotName = ""
+                        Task {
+                            await spotReducer.send(action: .setShowingAddSpotDialog(false))
+                        }
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         Task {
-                            await spotReducer.send(action: .addSpot(name: newSpotName, room: room))
-                            showingAddDialog = false
-                            newSpotName = ""
+                            await spotReducer.send(action: .addSpot(name: spotReducer.newSpotName, room: room))
                         }
                     }
-                    .disabled(newSpotName.isEmpty)
+                    .disabled(spotReducer.newSpotName.isEmpty)
                 }
             }
         }
@@ -155,16 +173,13 @@ struct SpotRowView: View {
 
 struct SpotDetailView: View {
     let spot: SpotDTO
-    @State private var spotReducer: Reducer<SpotListViewModel>
-    @State private var showingEditSheet = false
-    @State private var boxViewModel: BoxListViewModel
+    let room: RoomDTO
+    @State var spotReducer: Reducer<SpotListViewModel>
 
-    init(spot: SpotDTO, spotReducer: Reducer<SpotListViewModel>) {
+    init(spot: SpotDTO, spotReducer: Reducer<SpotListViewModel>, room: RoomDTO) {
         self.spot = spot
         self.spotReducer = spotReducer
-        self._boxViewModel = State(wrappedValue: BoxListViewModel(
-            boxRepository: BoxRepositoryImpl(container: sharedModelContainer)
-        ))
+        self.room = room
     }
 
     var body: some View {
@@ -177,18 +192,18 @@ struct SpotDetailView: View {
             }
 
             Section {
-                if boxViewModel.isLoading {
+                if spotReducer.boxesLoading {
                     HStack {
                         Spacer()
                         ProgressView()
                         Spacer()
                     }
-                } else if boxViewModel.boxes.isEmpty {
+                } else if spotReducer.boxes.isEmpty {
                     Text("No boxes in this spot")
                         .foregroundStyle(.secondary)
                         .font(.callout)
                 } else {
-                    ForEach(boxViewModel.boxes) { box in
+                    ForEach(spotReducer.boxes) { box in
                         NavigationLink {
                             BoxDetailView(box: box)
                         } label: {
@@ -206,25 +221,124 @@ struct SpotDetailView: View {
                             }
                         }
                     }
+                    .onDelete { offsets in
+                        Task {
+                            await spotReducer.send(action: .deleteBoxes(offsets: offsets))
+                        }
+                    }
                 }
             } header: {
-                Text("Boxes")
+                HStack {
+                    Text("Boxes")
+                    Spacer()
+                    Button {
+                        Task {
+                            await spotReducer.send(action: .setShowingAddBoxDialog(true))
+                        }
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
         .navigationTitle(spot.name)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Edit") {
-                    showingEditSheet = true
+                    Task {
+                        await spotReducer.send(action: .setShowingEditSpotSheet(true))
+                        await spotReducer.send(action: .setEditSpotName(spot.name))
+                    }
                 }
             }
         }
-        .sheet(isPresented: $showingEditSheet) {
+        .sheet(isPresented: .init(
+            get: { spotReducer.showingEditSpotSheet },
+            set: { newValue in
+                Task {
+                    await spotReducer.send(action: .setShowingEditSpotSheet(newValue))
+                }
+            }
+        )) {
             EditSpotSheet(spot: spot, spotReducer: spotReducer)
         }
-        .task {
-            await boxViewModel.load(for: spot)
+        .sheet(isPresented: .init(
+            get: { spotReducer.showingAddBoxDialog },
+            set: { newValue in
+                Task {
+                    await spotReducer.send(action: .setShowingAddBoxDialog(newValue))
+                }
+            }
+        )) {
+            addBoxSheet
         }
+        .alert("Box Error", isPresented: .constant(spotReducer.boxesError != nil)) {
+            Button("OK") {
+                // Error will be cleared by reducer
+            }
+        } message: {
+            if let error = spotReducer.boxesError {
+                Text(error)
+            }
+        }
+        .task {
+            await spotReducer.send(action: .loadBoxes(spot: spot))
+        }
+    }
+
+    private var addBoxSheet: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Box Label", text: .init(
+                        get: { spotReducer.newBoxLabel },
+                        set: { newValue in
+                            Task {
+                                await spotReducer.send(action: .setNewBoxLabel(newValue))
+                            }
+                        }
+                    ))
+                        .textInputAutocapitalization(.words)
+                    TextField("QR Code", text: .init(
+                        get: { spotReducer.newBoxQRCode },
+                        set: { newValue in
+                            Task {
+                                await spotReducer.send(action: .setNewBoxQRCode(newValue))
+                            }
+                        }
+                    ))
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                } header: {
+                    Text("Box Information")
+                }
+            }
+            .navigationTitle("New Box")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        Task {
+                            await spotReducer.send(action: .setShowingAddBoxDialog(false))
+                        }
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        Task {
+                            await spotReducer.send(action: .addBox(
+                                label: spotReducer.newBoxLabel,
+                                qrCode: spotReducer.newBoxQRCode,
+                                spot: spot
+                            ))
+                        }
+                    }
+                    .disabled(spotReducer.newBoxLabel.isEmpty || spotReducer.newBoxQRCode.isEmpty)
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
 
@@ -233,19 +347,19 @@ struct EditSpotSheet: View {
     @State var spotReducer: Reducer<SpotListViewModel>
 
     @Environment(\.dismiss) private var dismiss
-    @State private var spotName: String
-
-    init(spot: SpotDTO, spotReducer: Reducer<SpotListViewModel>) {
-        self.spot = spot
-        self.spotReducer = spotReducer
-        self._spotName = State(initialValue: spot.name)
-    }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Spot Name", text: $spotName)
+                    TextField("Spot Name", text: .init(
+                        get: { spotReducer.editSpotName },
+                        set: { newValue in
+                            Task {
+                                await spotReducer.send(action: .setEditSpotName(newValue))
+                            }
+                        }
+                    ))
                         .textInputAutocapitalization(.words)
                 } header: {
                     Text("Spot Information")
@@ -264,11 +378,11 @@ struct EditSpotSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            await spotReducer.send(action: .updateSpot(id: spot.id, name: spotName))
+                            await spotReducer.send(action: .updateSpot(id: spot.id, name: spotReducer.editSpotName))
                             dismiss()
                         }
                     }
-                    .disabled(spotName.isEmpty || spotName == spot.name)
+                    .disabled(spotReducer.editSpotName.isEmpty || spotReducer.editSpotName == spot.name)
                 }
             }
         }

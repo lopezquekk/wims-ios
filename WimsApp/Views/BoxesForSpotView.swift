@@ -11,16 +11,21 @@ import SwiftUI
 struct BoxesForSpotView: View {
     let spot: SpotDTO
 
-    @State private var viewModel: BoxListViewModel
+    @State private var boxReducer: Reducer<BoxListViewModel>
     @State private var showingAddDialog = false
     @State private var newBoxLabel = ""
     @State private var newBoxQRCode = ""
 
     init(spot: SpotDTO) {
         self.spot = spot
-        self._viewModel = State(wrappedValue: BoxListViewModel(
-            boxRepository: BoxRepositoryImpl(container: sharedModelContainer)
-        ))
+        self._boxReducer = State(
+            wrappedValue: .init(
+                reducer: BoxListViewModel(
+                    boxRepository: BoxRepositoryImpl(container: sharedModelContainer)
+                ),
+                initialState: .init()
+            )
+        )
     }
 
     var body: some View {
@@ -31,17 +36,17 @@ struct BoxesForSpotView: View {
                     addButton
                 }
             }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            .alert("Error", isPresented: .constant(boxReducer.errorMessage != nil)) {
                 Button("OK") {
-                    viewModel.errorMessage = nil
+                    // Error will be cleared by reducer
                 }
             } message: {
-                if let error = viewModel.errorMessage {
+                if let error = boxReducer.errorMessage {
                     Text(error)
                 }
             }
             .task {
-                await viewModel.load(for: spot)
+                await boxReducer.send(action: .load(spot: spot))
             }
             .sheet(isPresented: $showingAddDialog) {
                 addBoxSheet
@@ -52,22 +57,22 @@ struct BoxesForSpotView: View {
 
     private var boxesList: some View {
         Group {
-            if viewModel.isLoading {
+            if boxReducer.isLoading {
                 ProgressView("Loading boxes...")
-            } else if viewModel.boxes.isEmpty {
+            } else if boxReducer.boxes.isEmpty {
                 emptyState
             } else {
                 List {
-                    ForEach(viewModel.boxes) { box in
+                    ForEach(boxReducer.boxes) { box in
                         NavigationLink {
-                            BoxForSpotDetailView(box: box, viewModel: viewModel)
+                            BoxForSpotDetailView(box: box, boxReducer: boxReducer)
                         } label: {
                             BoxForSpotRowView(box: box)
                         }
                     }
                     .onDelete { offsets in
                         Task {
-                            await viewModel.deleteBoxes(at: offsets)
+                            await boxReducer.send(action: .deleteBoxes(offsets: offsets))
                         }
                     }
                 }
@@ -121,7 +126,7 @@ struct BoxesForSpotView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         Task {
-                            await viewModel.addBox(label: newBoxLabel, qrCode: newBoxQRCode, in: spot)
+                            await boxReducer.send(action: .addBox(label: newBoxLabel, qrCode: newBoxQRCode, spot: spot))
                             showingAddDialog = false
                             newBoxLabel = ""
                             newBoxQRCode = ""
@@ -160,7 +165,7 @@ struct BoxForSpotRowView: View {
 
 struct BoxForSpotDetailView: View {
     let box: BoxDTO
-    @State var viewModel: BoxListViewModel
+    @State var boxReducer: Reducer<BoxListViewModel>
     @State private var showingEditSheet = false
 
     var body: some View {
@@ -190,22 +195,22 @@ struct BoxForSpotDetailView: View {
             }
         }
         .sheet(isPresented: $showingEditSheet) {
-            EditBoxSheet(box: box, viewModel: viewModel)
+            EditBoxSheet(box: box, boxReducer: boxReducer)
         }
     }
 }
 
 struct EditBoxSheet: View {
     let box: BoxDTO
-    @State var viewModel: BoxListViewModel
+    @State var boxReducer: Reducer<BoxListViewModel>
 
     @Environment(\.dismiss) private var dismiss
     @State private var boxLabel: String
     @State private var boxQRCode: String
 
-    init(box: BoxDTO, viewModel: BoxListViewModel) {
+    init(box: BoxDTO, boxReducer: Reducer<BoxListViewModel>) {
         self.box = box
-        self.viewModel = viewModel
+        self.boxReducer = boxReducer
         self._boxLabel = State(initialValue: box.label)
         self._boxQRCode = State(initialValue: box.qrCode)
     }
@@ -236,7 +241,7 @@ struct EditBoxSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            await viewModel.updateBox(id: box.id, label: boxLabel, qrCode: boxQRCode)
+                            await boxReducer.send(action: .updateBox(id: box.id, label: boxLabel, qrCode: boxQRCode))
                             dismiss()
                         }
                     }

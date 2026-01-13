@@ -10,83 +10,139 @@ import PersistencyLayer
 import SwiftUI
 
 @MainActor
-@Observable
-final class RoomListViewModel {
-    private let roomRepository: RoomRepository
+struct RoomListViewModel: ReducerProtocol {
+    struct State: Sendable {
+        // Room list state
+        var rooms: [RoomDTO] = []
+        var isLoading = false
+        var errorMessage: String?
 
-    var rooms: [RoomDTO] = []
-    var isLoading = false
-    var errorMessage: String?
+        // Room form state
+        var showingAddRoomDialog = false
+        var newRoomName = ""
+
+        // Room edit state
+        var showingEditRoomSheet = false
+        var editRoomName = ""
+    }
+
+    enum Action: Equatable, Sendable {
+        // Room actions
+        case load(building: BuildingDTO)
+        case addRoom(name: String, building: BuildingDTO)
+        case updateRoom(id: UUID, name: String)
+        case deleteRooms(offsets: IndexSet)
+
+        // UI actions
+        case setShowingAddRoomDialog(Bool)
+        case setNewRoomName(String)
+        case setShowingEditRoomSheet(Bool)
+        case setEditRoomName(String)
+    }
+
+    private let roomRepository: RoomRepository
 
     init(roomRepository: RoomRepository) {
         self.roomRepository = roomRepository
     }
 
-    func load(for building: BuildingDTO) async {
-        isLoading = true
-        errorMessage = nil
+    func reduce(state: inout State, action: Action) async {
+        switch action {
+        // Room actions
+        case let .load(building):
+            await load(for: building, state: &state)
+        case let .addRoom(name, building):
+            await addRoom(name: name, in: building, state: &state)
+        case let .updateRoom(id, name):
+            await updateRoom(id: id, name: name, state: &state)
+        case let .deleteRooms(offsets):
+            await deleteRooms(at: offsets, state: &state)
+
+        // UI actions
+        case let .setShowingAddRoomDialog(showing):
+            state.showingAddRoomDialog = showing
+            if !showing {
+                state.newRoomName = ""
+            }
+        case let .setNewRoomName(name):
+            state.newRoomName = name
+        case let .setShowingEditRoomSheet(showing):
+            state.showingEditRoomSheet = showing
+        case let .setEditRoomName(name):
+            state.editRoomName = name
+        }
+    }
+
+    // MARK: - Room Methods
+
+    private func load(for building: BuildingDTO, state: inout State) async {
+        state.isLoading = true
+        state.errorMessage = nil
 
         do {
-            rooms = try await roomRepository.fetch(in: building)
+            state.rooms = try await roomRepository.fetch(in: building)
         } catch {
-            errorMessage = "Error loading rooms: \(error.localizedDescription)"
+            state.errorMessage = "Error loading rooms: \(error.localizedDescription)"
             print("Error fetching rooms:", error)
         }
 
-        isLoading = false
+        state.isLoading = false
     }
 
-    func addRoom(name: String, in building: BuildingDTO) async {
+    private func addRoom(name: String, in building: BuildingDTO, state: inout State) async {
         guard !name.isEmpty else {
-            errorMessage = "Room name cannot be empty"
+            state.errorMessage = "Room name cannot be empty"
             return
         }
 
-        errorMessage = nil
+        state.errorMessage = nil
 
         do {
             let room = try await roomRepository.create(name: name, in: building)
-            rooms.append(room)
+            state.rooms.append(room)
+            state.showingAddRoomDialog = false
+            state.newRoomName = ""
         } catch {
-            errorMessage = "Error creating room: \(error.localizedDescription)"
+            state.errorMessage = "Error creating room: \(error.localizedDescription)"
             print("Error creating room:", error)
         }
     }
 
-    func updateRoom(id: UUID, name: String) async {
+    private func updateRoom(id: UUID, name: String, state: inout State) async {
         guard !name.isEmpty else {
-            errorMessage = "Room name cannot be empty"
+            state.errorMessage = "Room name cannot be empty"
             return
         }
 
-        errorMessage = nil
+        state.errorMessage = nil
 
         do {
             let updatedRoom = try await roomRepository.update(id: id, name: name)
-            if let index = rooms.firstIndex(where: { $0.id == id }) {
-                rooms[index] = updatedRoom
+            if let index = state.rooms.firstIndex(where: { $0.id == id }) {
+                state.rooms[index] = updatedRoom
             }
+            state.showingEditRoomSheet = false
         } catch {
-            errorMessage = "Error updating room: \(error.localizedDescription)"
+            state.errorMessage = "Error updating room: \(error.localizedDescription)"
             print("Error updating room:", error)
         }
     }
 
-    func deleteRooms(at offsets: IndexSet) async {
-        errorMessage = nil
+    private func deleteRooms(at offsets: IndexSet, state: inout State) async {
+        state.errorMessage = nil
 
         for index in offsets {
-            let room = rooms[index]
+            let room = state.rooms[index]
 
             do {
                 try await roomRepository.delete(id: room.id)
             } catch {
-                errorMessage = "Error deleting room: \(error.localizedDescription)"
+                state.errorMessage = "Error deleting room: \(error.localizedDescription)"
                 print("Error deleting room:", error)
                 return
             }
         }
 
-        rooms.remove(atOffsets: offsets)
+        state.rooms.remove(atOffsets: offsets)
     }
 }

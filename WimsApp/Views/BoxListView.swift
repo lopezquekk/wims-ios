@@ -9,38 +9,58 @@ import PersistencyLayer
 import SwiftUI
 
 struct BoxListView: View {
-    @State private var viewModel: BoxListViewModel
-    @State private var showingQRScanner = false
-    @State private var qrCodeInput = ""
+    @State private var boxReducer: Reducer<BoxListViewModel>
 
-    init(viewModel: BoxListViewModel) {
-        self._viewModel = State(wrappedValue: viewModel)
+    init(boxRepository: BoxRepository) {
+        self._boxReducer = State(
+            wrappedValue: .init(
+                reducer: BoxListViewModel(boxRepository: boxRepository),
+                initialState: .init()
+            )
+        )
     }
 
     var body: some View {
         NavigationStack {
             boxesList
                 .navigationTitle("Boxes")
-                .searchable(text: $viewModel.searchText, prompt: "Search boxes")
+                .searchable(
+                    text: .init(
+                        get: { boxReducer.searchText },
+                        set: { newValue in
+                            Task {
+                                await boxReducer.send(action: .setSearchText(newValue))
+                            }
+                        }
+                    ),
+                    prompt: "Search boxes"
+                )
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
                         scanButton
                     }
                 }
-                .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+                .alert("Error", isPresented: .constant(boxReducer.errorMessage != nil)) {
                     Button("OK") {
-                        viewModel.errorMessage = nil
+                        // Error will be cleared by reducer
                     }
                 } message: {
-                    if let error = viewModel.errorMessage {
+                    if let error = boxReducer.errorMessage {
                         Text(error)
                     }
                 }
                 .task {
-                    await viewModel.loadAll()
+                    await boxReducer.send(action: .loadAll)
                 }
         }
-        .sheet(isPresented: $showingQRScanner) {
+        .sheet(isPresented: .init(
+            get: { boxReducer.showingQRScanner },
+            set: { newValue in
+                Task {
+                    await boxReducer.send(action: .setShowingQRScanner(newValue))
+                }
+            }
+        )) {
             qrScannerSheet
         }
     }
@@ -49,13 +69,13 @@ struct BoxListView: View {
 
     private var boxesList: some View {
         Group {
-            if viewModel.isLoading {
+            if boxReducer.isLoading {
                 ProgressView("Loading boxes...")
-            } else if viewModel.filteredBoxes.isEmpty {
+            } else if boxReducer.filteredBoxes.isEmpty {
                 emptyState
             } else {
                 List {
-                    ForEach(viewModel.filteredBoxes) { box in
+                    ForEach(boxReducer.filteredBoxes) { box in
                         NavigationLink {
                             BoxDetailView(box: box)
                         } label: {
@@ -64,7 +84,7 @@ struct BoxListView: View {
                     }
                     .onDelete { offsets in
                         Task {
-                            await viewModel.deleteBoxes(at: offsets)
+                            await boxReducer.send(action: .deleteBoxes(offsets: offsets))
                         }
                     }
                 }
@@ -76,15 +96,17 @@ struct BoxListView: View {
         ContentUnavailableView {
             Label("No Boxes Found", systemImage: "shippingbox")
         } description: {
-            if viewModel.searchText.isEmpty {
+            if boxReducer.searchText.isEmpty {
                 Text("Create boxes by adding them to spots in Buildings")
             } else {
                 Text("No boxes match your search")
             }
         } actions: {
-            if !viewModel.searchText.isEmpty {
+            if !boxReducer.searchText.isEmpty {
                 Button("Clear Search") {
-                    viewModel.searchText = ""
+                    Task {
+                        await boxReducer.send(action: .setSearchText(""))
+                    }
                 }
             }
         }
@@ -92,7 +114,9 @@ struct BoxListView: View {
 
     private var scanButton: some View {
         Button {
-            showingQRScanner = true
+            Task {
+                await boxReducer.send(action: .setShowingQRScanner(true))
+            }
         } label: {
             Label("Scan QR", systemImage: "qrcode.viewfinder")
         }
@@ -102,7 +126,14 @@ struct BoxListView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("QR Code", text: $qrCodeInput)
+                    TextField("QR Code", text: .init(
+                        get: { boxReducer.qrCodeInput },
+                        set: { newValue in
+                            Task {
+                                await boxReducer.send(action: .setQRCodeInput(newValue))
+                            }
+                        }
+                    ))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                 } header: {
@@ -116,19 +147,18 @@ struct BoxListView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        showingQRScanner = false
-                        qrCodeInput = ""
+                        Task {
+                            await boxReducer.send(action: .setShowingQRScanner(false))
+                        }
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Search") {
                         Task {
-                            await viewModel.searchBox(byQRCode: qrCodeInput)
-                            showingQRScanner = false
-                            qrCodeInput = ""
+                            await boxReducer.send(action: .searchByQR(qrCode: boxReducer.qrCodeInput))
                         }
                     }
-                    .disabled(qrCodeInput.isEmpty)
+                    .disabled(boxReducer.qrCodeInput.isEmpty)
                 }
             }
         }
@@ -295,10 +325,8 @@ struct BoxDetailView: View {
 
 #Preview {
     BoxListView(
-        viewModel: BoxListViewModel(
-            boxRepository: BoxRepositoryImpl(
-                container: sharedModelContainer
-            )
+        boxRepository: BoxRepositoryImpl(
+            container: sharedModelContainer
         )
     )
 }

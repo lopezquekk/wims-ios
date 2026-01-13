@@ -11,15 +11,18 @@ import SwiftUI
 struct RoomListView: View {
     let building: BuildingDTO
 
-    @State private var viewModel: RoomListViewModel
-    @State private var showingAddDialog = false
-    @State private var newRoomName = ""
+    @State private var roomReducer: Reducer<RoomListViewModel>
 
     init(building: BuildingDTO) {
         self.building = building
-        self._viewModel = State(wrappedValue: RoomListViewModel(
-            roomRepository: RoomRepositoryImpl(container: sharedModelContainer)
-        ))
+        self._roomReducer = State(
+            wrappedValue: .init(
+                reducer: RoomListViewModel(
+                    roomRepository: RoomRepositoryImpl(container: sharedModelContainer)
+                ),
+                initialState: .init()
+            )
+        )
     }
 
     var body: some View {
@@ -30,19 +33,26 @@ struct RoomListView: View {
                     addButton
                 }
             }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            .alert("Error", isPresented: .constant(roomReducer.errorMessage != nil)) {
                 Button("OK") {
-                    viewModel.errorMessage = nil
+                    // Error will be cleared by reducer
                 }
             } message: {
-                if let error = viewModel.errorMessage {
+                if let error = roomReducer.errorMessage {
                     Text(error)
                 }
             }
             .task {
-                await viewModel.load(for: building)
+                await roomReducer.send(action: .load(building: building))
             }
-            .sheet(isPresented: $showingAddDialog) {
+            .sheet(isPresented: .init(
+                get: { roomReducer.showingAddRoomDialog },
+                set: { newValue in
+                    Task {
+                        await roomReducer.send(action: .setShowingAddRoomDialog(newValue))
+                    }
+                }
+            )) {
                 addRoomSheet
             }
     }
@@ -51,22 +61,22 @@ struct RoomListView: View {
 
     private var roomsList: some View {
         Group {
-            if viewModel.isLoading {
+            if roomReducer.isLoading {
                 ProgressView("Loading rooms...")
-            } else if viewModel.rooms.isEmpty {
+            } else if roomReducer.rooms.isEmpty {
                 emptyState
             } else {
                 List {
-                    ForEach(viewModel.rooms) { room in
+                    ForEach(roomReducer.rooms) { room in
                         NavigationLink {
-                            RoomDetailView(room: room, viewModel: viewModel)
+                            RoomDetailView(room: room, roomReducer: roomReducer)
                         } label: {
                             RoomRowView(room: room)
                         }
                     }
                     .onDelete { offsets in
                         Task {
-                            await viewModel.deleteRooms(at: offsets)
+                            await roomReducer.send(action: .deleteRooms(offsets: offsets))
                         }
                     }
                 }
@@ -81,14 +91,18 @@ struct RoomListView: View {
             Text("Add your first room to get started")
         } actions: {
             Button("Add Room") {
-                showingAddDialog = true
+                Task {
+                    await roomReducer.send(action: .setShowingAddRoomDialog(true))
+                }
             }
         }
     }
 
     private var addButton: some View {
         Button {
-            showingAddDialog = true
+            Task {
+                await roomReducer.send(action: .setShowingAddRoomDialog(true))
+            }
         } label: {
             Label("Add Room", systemImage: "plus")
         }
@@ -98,7 +112,14 @@ struct RoomListView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Room Name", text: $newRoomName)
+                    TextField("Room Name", text: .init(
+                        get: { roomReducer.newRoomName },
+                        set: { newValue in
+                            Task {
+                                await roomReducer.send(action: .setNewRoomName(newValue))
+                            }
+                        }
+                    ))
                         .textInputAutocapitalization(.words)
                 } header: {
                     Text("Room Information")
@@ -109,19 +130,18 @@ struct RoomListView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        showingAddDialog = false
-                        newRoomName = ""
+                        Task {
+                            await roomReducer.send(action: .setShowingAddRoomDialog(false))
+                        }
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         Task {
-                            await viewModel.addRoom(name: newRoomName, in: building)
-                            showingAddDialog = false
-                            newRoomName = ""
+                            await roomReducer.send(action: .addRoom(name: roomReducer.newRoomName, building: building))
                         }
                     }
-                    .disabled(newRoomName.isEmpty)
+                    .disabled(roomReducer.newRoomName.isEmpty)
                 }
             }
         }
@@ -148,17 +168,19 @@ struct RoomRowView: View {
 
 struct RoomDetailView: View {
     let room: RoomDTO
-    @State var viewModel: RoomListViewModel
-    @State private var showingEditSheet = false
+    @State var roomReducer: Reducer<RoomListViewModel>
     @State private var spotReducer: Reducer<SpotListViewModel>
 
-    init(room: RoomDTO, viewModel: RoomListViewModel) {
+    init(room: RoomDTO, roomReducer: Reducer<RoomListViewModel>) {
         self.room = room
-        self.viewModel = viewModel
+        self.roomReducer = roomReducer
         self._spotReducer = State(
             wrappedValue: .init(
                 reducer: SpotListViewModel(
                     spotRepository: SpotRepositoryImpl(
+                        container: sharedModelContainer
+                    ),
+                    boxRepository: BoxRepositoryImpl(
                         container: sharedModelContainer
                     )
                 ),
@@ -190,7 +212,7 @@ struct RoomDetailView: View {
                 } else {
                     ForEach(spotReducer.spots) { spot in
                         NavigationLink {
-                            SpotDetailView(spot: spot, spotReducer: spotReducer)
+                            SpotDetailView(spot: spot, spotReducer: spotReducer, room: room)
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(spot.name)
@@ -202,46 +224,122 @@ struct RoomDetailView: View {
                             }
                         }
                     }
+                    .onDelete { offsets in
+                        Task {
+                            await spotReducer.send(action: .deleteSpots(offsets: offsets))
+                        }
+                    }
                 }
             } header: {
-                Text("Spots")
+                HStack {
+                    Text("Spots")
+                    Spacer()
+                    Button {
+                        Task {
+                            await spotReducer.send(action: .setShowingAddSpotDialog(true))
+                        }
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
         .navigationTitle(room.name)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Edit") {
-                    showingEditSheet = true
+                    Task {
+                        await roomReducer.send(action: .setShowingEditRoomSheet(true))
+                        await roomReducer.send(action: .setEditRoomName(room.name))
+                    }
                 }
             }
         }
-        .sheet(isPresented: $showingEditSheet) {
-            EditRoomSheet(room: room, viewModel: viewModel)
+        .sheet(isPresented: .init(
+            get: { roomReducer.showingEditRoomSheet },
+            set: { newValue in
+                Task {
+                    await roomReducer.send(action: .setShowingEditRoomSheet(newValue))
+                }
+            }
+        )) {
+            EditRoomSheet(room: room, roomReducer: roomReducer)
+        }
+        .sheet(isPresented: .init(
+            get: { spotReducer.showingAddSpotDialog },
+            set: { newValue in
+                Task {
+                    await spotReducer.send(action: .setShowingAddSpotDialog(newValue))
+                }
+            }
+        )) {
+            addSpotSheet
         }
         .task {
             await spotReducer.send(action: .load(room: room))
         }
     }
+
+    private var addSpotSheet: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Spot Name", text: .init(
+                        get: { spotReducer.newSpotName },
+                        set: { newValue in
+                            Task {
+                                await spotReducer.send(action: .setNewSpotName(newValue))
+                            }
+                        }
+                    ))
+                        .textInputAutocapitalization(.words)
+                } header: {
+                    Text("Spot Information")
+                }
+            }
+            .navigationTitle("New Spot")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        Task {
+                            await spotReducer.send(action: .setShowingAddSpotDialog(false))
+                        }
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        Task {
+                            await spotReducer.send(action: .addSpot(name: spotReducer.newSpotName, room: room))
+                        }
+                    }
+                    .disabled(spotReducer.newSpotName.isEmpty)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
 }
 
 struct EditRoomSheet: View {
     let room: RoomDTO
-    @State var viewModel: RoomListViewModel
+    @State var roomReducer: Reducer<RoomListViewModel>
 
     @Environment(\.dismiss) private var dismiss
-    @State private var roomName: String
-
-    init(room: RoomDTO, viewModel: RoomListViewModel) {
-        self.room = room
-        self.viewModel = viewModel
-        self._roomName = State(initialValue: room.name)
-    }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Room Name", text: $roomName)
+                    TextField("Room Name", text: .init(
+                        get: { roomReducer.editRoomName },
+                        set: { newValue in
+                            Task {
+                                await roomReducer.send(action: .setEditRoomName(newValue))
+                            }
+                        }
+                    ))
                         .textInputAutocapitalization(.words)
                 } header: {
                     Text("Room Information")
@@ -260,11 +358,11 @@ struct EditRoomSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            await viewModel.updateRoom(id: room.id, name: roomName)
+                            await roomReducer.send(action: .updateRoom(id: room.id, name: roomReducer.editRoomName))
                             dismiss()
                         }
                     }
-                    .disabled(roomName.isEmpty || roomName == room.name)
+                    .disabled(roomReducer.editRoomName.isEmpty || roomReducer.editRoomName == room.name)
                 }
             }
         }

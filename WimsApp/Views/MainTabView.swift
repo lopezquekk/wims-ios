@@ -29,7 +29,7 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             BoxListView(
-                viewModel: BoxListViewModel(boxRepository: boxRepository)
+                boxRepository: boxRepository
             )
             .tabItem {
                 Label("Boxes", systemImage: "shippingbox")
@@ -45,7 +45,7 @@ struct MainTabView: View {
             .tag(1)
 
             BuildingListView(
-                viewModel: BuildingListViewModel(buildingRepository: buildingRepository)
+                buildingRepository: buildingRepository
             )
             .tabItem {
                 Label("Buildings", systemImage: "building.2")

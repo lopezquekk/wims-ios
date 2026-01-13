@@ -9,12 +9,15 @@ import PersistencyLayer
 import SwiftUI
 
 struct BuildingListView: View {
-    @State private var viewModel: BuildingListViewModel
-    @State private var showingAddDialog = false
-    @State private var newBuildingName = ""
+    @State private var buildingReducer: Reducer<BuildingListViewModel>
 
-    init(viewModel: BuildingListViewModel) {
-        self.viewModel = viewModel
+    init(buildingRepository: BuildingRepository) {
+        self._buildingReducer = State(
+            wrappedValue: .init(
+                reducer: BuildingListViewModel(buildingRepository: buildingRepository),
+                initialState: .init()
+            )
+        )
     }
 
     var body: some View {
@@ -26,22 +29,29 @@ struct BuildingListView: View {
                         addButton
                     }
                 }
-                .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+                .alert("Error", isPresented: .constant(buildingReducer.errorMessage != nil)) {
                     Button("OK") {
-                        viewModel.errorMessage = nil
+                        // Error will be cleared by reducer
                     }
                 } message: {
-                    if let error = viewModel.errorMessage {
+                    if let error = buildingReducer.errorMessage {
                         Text(error)
                     }
                 }
                 .task {
-                    await viewModel.load()
+                    await buildingReducer.send(action: .load)
                 }
         } detail: {
             detailPlaceholder
         }
-        .sheet(isPresented: $showingAddDialog) {
+        .sheet(isPresented: .init(
+            get: { buildingReducer.showingAddBuildingDialog },
+            set: { newValue in
+                Task {
+                    await buildingReducer.send(action: .setShowingAddBuildingDialog(newValue))
+                }
+            }
+        )) {
             addBuildingSheet
         }
     }
@@ -50,22 +60,22 @@ struct BuildingListView: View {
 
     private var buildingsList: some View {
         Group {
-            if viewModel.isLoading {
+            if buildingReducer.isLoading {
                 ProgressView("Loading buildings...")
-            } else if viewModel.buildings.isEmpty {
+            } else if buildingReducer.buildings.isEmpty {
                 emptyState
             } else {
                 List {
-                    ForEach(viewModel.buildings) { building in
+                    ForEach(buildingReducer.buildings) { building in
                         NavigationLink {
-                            BuildingDetailView(building: building)
+                            BuildingDetailView(building: building, buildingReducer: buildingReducer)
                         } label: {
                             BuildingRowView(building: building)
                         }
                     }
                     .onDelete { offsets in
                         Task {
-                            await viewModel.deleteBuildings(at: offsets)
+                            await buildingReducer.send(action: .deleteBuildings(offsets: offsets))
                         }
                     }
                 }
@@ -80,14 +90,18 @@ struct BuildingListView: View {
             Text("Add your first building to get started")
         } actions: {
             Button("Add Building") {
-                showingAddDialog = true
+                Task {
+                    await buildingReducer.send(action: .setShowingAddBuildingDialog(true))
+                }
             }
         }
     }
 
     private var addButton: some View {
         Button {
-            showingAddDialog = true
+            Task {
+                await buildingReducer.send(action: .setShowingAddBuildingDialog(true))
+            }
         } label: {
             Label("Add Building", systemImage: "plus")
         }
@@ -105,7 +119,14 @@ struct BuildingListView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Building Name", text: $newBuildingName)
+                    TextField("Building Name", text: .init(
+                        get: { buildingReducer.newBuildingName },
+                        set: { newValue in
+                            Task {
+                                await buildingReducer.send(action: .setNewBuildingName(newValue))
+                            }
+                        }
+                    ))
                         .textInputAutocapitalization(.words)
                 } header: {
                     Text("Building Information")
@@ -116,19 +137,18 @@ struct BuildingListView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        showingAddDialog = false
-                        newBuildingName = ""
+                        Task {
+                            await buildingReducer.send(action: .setShowingAddBuildingDialog(false))
+                        }
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         Task {
-                            await viewModel.addBuilding(name: newBuildingName)
-                            showingAddDialog = false
-                            newBuildingName = ""
+                            await buildingReducer.send(action: .addBuilding(name: buildingReducer.newBuildingName))
                         }
                     }
-                    .disabled(newBuildingName.isEmpty)
+                    .disabled(buildingReducer.newBuildingName.isEmpty)
                 }
             }
         }
@@ -155,14 +175,20 @@ struct BuildingRowView: View {
 
 struct BuildingDetailView: View {
     let building: BuildingDTO
-    @State private var showingEditSheet = false
-    @State private var roomViewModel: RoomListViewModel
+    @State var buildingReducer: Reducer<BuildingListViewModel>
+    @State private var roomReducer: Reducer<RoomListViewModel>
 
-    init(building: BuildingDTO) {
+    init(building: BuildingDTO, buildingReducer: Reducer<BuildingListViewModel>) {
         self.building = building
-        self._roomViewModel = State(wrappedValue: RoomListViewModel(
-            roomRepository: RoomRepositoryImpl(container: sharedModelContainer)
-        ))
+        self.buildingReducer = buildingReducer
+        self._roomReducer = State(
+            wrappedValue: .init(
+                reducer: RoomListViewModel(
+                    roomRepository: RoomRepositoryImpl(container: sharedModelContainer)
+                ),
+                initialState: .init()
+            )
+        )
     }
 
     var body: some View {
@@ -175,20 +201,20 @@ struct BuildingDetailView: View {
             }
 
             Section {
-                if roomViewModel.isLoading {
+                if roomReducer.isLoading {
                     HStack {
                         Spacer()
                         ProgressView()
                         Spacer()
                     }
-                } else if roomViewModel.rooms.isEmpty {
+                } else if roomReducer.rooms.isEmpty {
                     Text("No rooms in this building")
                         .foregroundStyle(.secondary)
                         .font(.callout)
                 } else {
-                    ForEach(roomViewModel.rooms) { room in
+                    ForEach(roomReducer.rooms) { room in
                         NavigationLink {
-                            RoomDetailView(room: room, viewModel: roomViewModel)
+                            RoomDetailView(room: room, roomReducer: roomReducer)
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(room.name)
@@ -209,15 +235,25 @@ struct BuildingDetailView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Edit") {
-                    showingEditSheet = true
+                    Task {
+                        await buildingReducer.send(action: .setShowingEditBuildingSheet(true))
+                        await buildingReducer.send(action: .setEditBuildingName(building.name))
+                    }
                 }
             }
         }
-        .sheet(isPresented: $showingEditSheet) {
-            EditBuildingSheet(building: building)
+        .sheet(isPresented: .init(
+            get: { buildingReducer.showingEditBuildingSheet },
+            set: { newValue in
+                Task {
+                    await buildingReducer.send(action: .setShowingEditBuildingSheet(newValue))
+                }
+            }
+        )) {
+            EditBuildingSheet(building: building, buildingReducer: buildingReducer)
         }
         .task {
-            await roomViewModel.load(for: building)
+            await roomReducer.send(action: .load(building: building))
         }
     }
 }
@@ -226,10 +262,8 @@ struct BuildingDetailView: View {
 
 #Preview {
     BuildingListView(
-        viewModel: BuildingListViewModel(
-            buildingRepository: BuildingRepositoryImpl(
-                container: sharedModelContainer
-            )
+        buildingRepository: BuildingRepositoryImpl(
+            container: sharedModelContainer
         )
     )
 }

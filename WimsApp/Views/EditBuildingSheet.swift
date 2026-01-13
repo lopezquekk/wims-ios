@@ -10,24 +10,22 @@ import SwiftUI
 
 struct EditBuildingSheet: View {
     let building: BuildingDTO
+    @State var buildingReducer: Reducer<BuildingListViewModel>
 
     @Environment(\.dismiss) private var dismiss
-    @State private var buildingName: String
-    @State private var viewModel: BuildingListViewModel
-
-    init(building: BuildingDTO) {
-        self.building = building
-        self._buildingName = State(initialValue: building.name)
-        self._viewModel = State(initialValue: BuildingListViewModel(
-            buildingRepository: BuildingRepositoryImpl(container: sharedModelContainer)
-        ))
-    }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Building Name", text: $buildingName)
+                    TextField("Building Name", text: .init(
+                        get: { buildingReducer.editBuildingName },
+                        set: { newValue in
+                            Task {
+                                await buildingReducer.send(action: .setEditBuildingName(newValue))
+                            }
+                        }
+                    ))
                         .textInputAutocapitalization(.words)
                 } header: {
                     Text("Building Information")
@@ -46,19 +44,19 @@ struct EditBuildingSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            await viewModel.updateBuilding(id: building.id, name: buildingName)
+                            await buildingReducer.send(action: .updateBuilding(id: building.id, name: buildingReducer.editBuildingName))
                             dismiss()
                         }
                     }
-                    .disabled(buildingName.isEmpty || buildingName == building.name)
+                    .disabled(buildingReducer.editBuildingName.isEmpty || buildingReducer.editBuildingName == building.name)
                 }
             }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            .alert("Error", isPresented: .constant(buildingReducer.errorMessage != nil)) {
                 Button("OK") {
-                    viewModel.errorMessage = nil
+                    // Error will be cleared by reducer
                 }
             } message: {
-                if let error = viewModel.errorMessage {
+                if let error = buildingReducer.errorMessage {
                     Text(error)
                 }
             }
@@ -68,11 +66,19 @@ struct EditBuildingSheet: View {
 }
 
 #Preview {
+    @Previewable @State var reducer = Reducer(
+        reducer: BuildingListViewModel(
+            buildingRepository: BuildingRepositoryImpl(container: sharedModelContainer)
+        ),
+        initialState: .init()
+    )
+
     EditBuildingSheet(
         building: BuildingDTO(
             id: UUID(),
             name: "Sample Building",
             createdAt: Date()
-        )
+        ),
+        buildingReducer: reducer
     )
 }
