@@ -5,6 +5,7 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
+import FactoryKit
 import PersistencyLayer
 import SwiftUI
 
@@ -17,9 +18,7 @@ struct RoomListView: View {
         self.building = building
         self._roomReducer = State(
             wrappedValue: .init(
-                reducer: RoomListReducer(
-                    roomRepository: RoomRepositoryImpl(container: sharedModelContainer)
-                ),
+                reducer: Container.shared.roomListReducer(),
                 initialState: .init()
             )
         )
@@ -176,14 +175,7 @@ struct RoomDetailView: View {
         self.roomReducer = roomReducer
         self._spotReducer = State(
             wrappedValue: .init(
-                reducer: SpotListReducer(
-                    spotRepository: SpotRepositoryImpl(
-                        container: sharedModelContainer
-                    ),
-                    boxRepository: BoxRepositoryImpl(
-                        container: sharedModelContainer
-                    )
-                ),
+                reducer: Container.shared.spotListReducer(),
                 initialState: .init()
             )
         )

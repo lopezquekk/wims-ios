@@ -5,6 +5,7 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
+import FactoryKit
 import PersistencyLayer
 import SwiftUI
 
@@ -20,9 +21,7 @@ struct BoxesForSpotView: View {
         self.spot = spot
         self._boxReducer = State(
             wrappedValue: .init(
-                reducer: BoxListReducer(
-                    boxRepository: BoxRepositoryImpl(container: sharedModelContainer)
-                ),
+                reducer: Container.shared.boxListReducer(),
                 initialState: .init()
             )
         )

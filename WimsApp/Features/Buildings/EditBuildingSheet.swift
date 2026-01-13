@@ -5,6 +5,7 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
+import FactoryKit
 import PersistencyLayer
 import SwiftUI
 
@@ -67,13 +68,13 @@ struct EditBuildingSheet: View {
 
 #Preview {
     @Previewable @State var reducer = Reducer(
-        reducer: BuildingListReducer(
-            buildingRepository: BuildingRepositoryImpl(container: sharedModelContainer)
-        ),
+        reducer: Container.shared.buildingListReducer(),
         initialState: .init()
     )
 
-    EditBuildingSheet(
+    Container.setupForPreviews()
+
+    return EditBuildingSheet(
         building: BuildingDTO(
             id: UUID(),
             name: "Sample Building",

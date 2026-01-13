@@ -5,16 +5,17 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
+import FactoryKit
 import PersistencyLayer
 import SwiftUI
 
 struct BoxListView: View {
     @State private var boxReducer: Reducer<BoxListReducer>
 
-    init(boxRepository: BoxRepository) {
+    init() {
         self._boxReducer = State(
             wrappedValue: .init(
-                reducer: BoxListReducer(boxRepository: boxRepository),
+                reducer: Container.shared.boxListReducer(),
                 initialState: .init()
             )
         )
@@ -209,7 +210,7 @@ struct BoxDetailView: View {
         self.box = box
         self._itemReducer = State(
             wrappedValue: .init(
-                reducer: ItemListReducer(itemRepository: ItemRepositoryImpl(container: sharedModelContainer)),
+                reducer: Container.shared.itemListReducer(),
                 initialState: .init()
             )
         )
@@ -327,9 +328,6 @@ struct BoxDetailView: View {
 // MARK: - Preview
 
 #Preview {
-    BoxListView(
-        boxRepository: BoxRepositoryImpl(
-            container: sharedModelContainer
-        )
-    )
+    Container.setupForPreviews()
+    return BoxListView()
 }

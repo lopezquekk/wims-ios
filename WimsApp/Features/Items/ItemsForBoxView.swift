@@ -5,6 +5,7 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
+import FactoryKit
 import PersistencyLayer
 import PhotosUI
 import SwiftUI
@@ -19,7 +20,7 @@ struct ItemsForBoxView: View {
         self.box = box
         self._itemReducer = State(
             wrappedValue: .init(
-                reducer: ItemListReducer(itemRepository: ItemRepositoryImpl(container: sharedModelContainer)),
+                reducer: Container.shared.itemListReducer(),
                 initialState: .init()
             )
         )

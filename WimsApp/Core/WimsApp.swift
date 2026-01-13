@@ -5,6 +5,7 @@
 //  Created by Camilo Lopez on 12/29/25.
 //
 
+import FactoryKit
 import PersistencyLayer
 import SwiftData
 import SwiftUI
@@ -13,12 +14,8 @@ import SwiftUI
 struct WimsApp: App {
     var body: some Scene {
         WindowGroup {
-            MainTabView(
-                buildingRepository: BuildingRepositoryImpl(container: sharedModelContainer),
-                boxRepository: BoxRepositoryImpl(container: sharedModelContainer),
-                itemRepository: ItemRepositoryImpl(container: sharedModelContainer)
-            )
+            MainTabView()
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(Container.shared.modelContainer())
     }
 }

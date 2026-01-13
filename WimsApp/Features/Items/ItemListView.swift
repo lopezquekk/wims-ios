@@ -5,6 +5,7 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
+import FactoryKit
 import PersistencyLayer
 import PhotosUI
 import SwiftUI
@@ -12,10 +13,10 @@ import SwiftUI
 struct ItemListView: View {
     @State private var itemReducer: Reducer<ItemListReducer>
 
-    init(itemRepository: ItemRepository) {
+    init() {
         self._itemReducer = State(
             wrappedValue: .init(
-                reducer: ItemListReducer(itemRepository: itemRepository),
+                reducer: Container.shared.itemListReducer(),
                 initialState: .init()
             )
         )
@@ -295,10 +296,10 @@ struct AddItemFromTabSheet: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
-    private let buildingRepository = BuildingRepositoryImpl(container: sharedModelContainer)
-    private let roomRepository = RoomRepositoryImpl(container: sharedModelContainer)
-    private let spotRepository = SpotRepositoryImpl(container: sharedModelContainer)
-    private let boxRepository = BoxRepositoryImpl(container: sharedModelContainer)
+    @Injected(\.buildingRepository) private var buildingRepository
+    @Injected(\.roomRepository) private var roomRepository
+    @Injected(\.spotRepository) private var spotRepository
+    @Injected(\.boxRepository) private var boxRepository
 
     var body: some View {
         NavigationStack {
@@ -611,9 +612,6 @@ struct EditItemFromListSheet: View {
 // MARK: - Preview
 
 #Preview {
-    ItemListView(
-        itemRepository: ItemRepositoryImpl(
-            container: sharedModelContainer
-        )
-    )
+    Container.setupForPreviews()
+    return ItemListView()
 }

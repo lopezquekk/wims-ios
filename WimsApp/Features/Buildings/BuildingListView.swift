@@ -5,16 +5,17 @@
 //  Created by Camilo Lopez on 1/11/26.
 //
 
+import FactoryKit
 import PersistencyLayer
 import SwiftUI
 
 struct BuildingListView: View {
     @State private var buildingReducer: Reducer<BuildingListReducer>
 
-    init(buildingRepository: BuildingRepository) {
+    init() {
         self._buildingReducer = State(
             wrappedValue: .init(
-                reducer: BuildingListReducer(buildingRepository: buildingRepository),
+                reducer: Container.shared.buildingListReducer(),
                 initialState: .init()
             )
         )
@@ -183,9 +184,7 @@ struct BuildingDetailView: View {
         self.buildingReducer = buildingReducer
         self._roomReducer = State(
             wrappedValue: .init(
-                reducer: RoomListReducer(
-                    roomRepository: RoomRepositoryImpl(container: sharedModelContainer)
-                ),
+                reducer: Container.shared.roomListReducer(),
                 initialState: .init()
             )
         )
@@ -261,9 +260,6 @@ struct BuildingDetailView: View {
 // MARK: - Preview
 
 #Preview {
-    BuildingListView(
-        buildingRepository: BuildingRepositoryImpl(
-            container: sharedModelContainer
-        )
-    )
+    Container.setupForPreviews()
+    return BuildingListView()
 }
