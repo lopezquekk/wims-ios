@@ -57,18 +57,20 @@ platform :ios do
   # ========================================
   desc "Build the Wims iOS app (build only, no archive/signing)"
   lane :build_app do
-    # Simple build without archiving or code signing
+    # Use raw xcodebuild command to ensure we only build (no archive)
     # This is sufficient for CI verification
-    xcodebuild(
-      project: project_path,
-      scheme: SCHEME,
-      destination: DESTINATION,
-      configuration: "Debug",
-      derivedDataPath: derived_data_path,
-      clean: true,
-      build: true,
-      xcargs: "-quiet CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=\"\" CODE_SIGNING_REQUIRED=NO"
-    )
+    sh("set -o pipefail && " \
+       "xcodebuild " \
+       "-scheme #{SCHEME} " \
+       "-project #{project_path} " \
+       "-destination '#{DESTINATION}' " \
+       "-configuration Debug " \
+       "-derivedDataPath #{derived_data_path} " \
+       "clean build " \
+       "CODE_SIGNING_ALLOWED=NO " \
+       "CODE_SIGN_IDENTITY='' " \
+       "CODE_SIGNING_REQUIRED=NO " \
+       "| xcbeautify || true")
   end
 
   # ========================================
