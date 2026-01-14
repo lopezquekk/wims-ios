@@ -16,7 +16,6 @@ protocol ReducerProtocol {
 @dynamicMemberLookup
 @Observable
 final class Reducer<R: ReducerProtocol> {
-
     @ObservationIgnored private let reducer: R
     private(set) var state: R.State
 

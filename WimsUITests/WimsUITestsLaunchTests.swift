@@ -5,10 +5,11 @@
 //  Created by Camilo Lopez on 12/29/25.
 //
 
+// swiftlint:disable swift_testing_test swift_testing_suite static_over_final_class
 import XCTest
 
 final class WimsUITestsLaunchTests: XCTestCase {
-    static var runsForEachTargetApplicationUIConfiguration: Bool {
+    override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
     }
 
@@ -30,3 +31,4 @@ final class WimsUITestsLaunchTests: XCTestCase {
         add(attachment)
     }
 }
+// swiftlint:enable swift_testing_test swift_testing_suite static_over_final_class

@@ -45,11 +45,19 @@ struct EditBuildingSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            await buildingReducer.send(action: .updateBuilding(id: building.id, name: buildingReducer.editBuildingName))
+                            await buildingReducer.send(
+                                action: .updateBuilding(
+                                    id: building.id,
+                                    name: buildingReducer.editBuildingName
+                                )
+                            )
                             dismiss()
                         }
                     }
-                    .disabled(buildingReducer.editBuildingName.isEmpty || buildingReducer.editBuildingName == building.name)
+                    .disabled(
+                        buildingReducer.editBuildingName.isEmpty ||
+                        buildingReducer.editBuildingName == building.name
+                    )
                 }
             }
             .alert("Error", isPresented: .constant(buildingReducer.errorMessage != nil)) {
