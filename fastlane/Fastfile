@@ -59,18 +59,12 @@ platform :ios do
   lane :build_app do
     # Use raw xcodebuild command to ensure we only build (no archive)
     # This is sufficient for CI verification
-    sh("set -o pipefail && " \
-       "xcodebuild " \
-       "-scheme #{SCHEME} " \
-       "-project #{project_path} " \
-       "-destination '#{DESTINATION}' " \
-       "-configuration Debug " \
-       "-derivedDataPath #{derived_data_path} " \
-       "clean build " \
-       "CODE_SIGNING_ALLOWED=NO " \
-       "CODE_SIGN_IDENTITY='' " \
-       "CODE_SIGNING_REQUIRED=NO " \
-       "| xcbeautify || true")
+    cmd = "xcodebuild -scheme #{SCHEME} -project #{project_path} -destination '#{DESTINATION}' " \
+          "-configuration Debug -derivedDataPath #{derived_data_path} " \
+          "clean build " \
+          "CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO"
+
+    sh(cmd)
   end
 
   # ========================================
