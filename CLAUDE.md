@@ -11,13 +11,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### iOS App (Xcode)
 ```bash
 # Open the Xcode project
-open Wims/Wims.xcodeproj
+open Wims.xcodeproj
 
 # Build from command line
-xcodebuild -project Wims/Wims.xcodeproj -scheme Wims -destination 'platform=iOS Simulator,name=iPhone 16' build
+xcodebuild -project Wims.xcodeproj -scheme Wims -destination 'platform=iOS Simulator,name=iPhone 16' build
 
 # Run tests
-xcodebuild test -project Wims/Wims.xcodeproj -scheme Wims -destination 'platform=iOS Simulator,name=iPhone 16'
+xcodebuild test -project Wims.xcodeproj -scheme Wims -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
 ### Swift Packages
@@ -52,7 +52,7 @@ swift test --filter RepositoryDeleteTests
 
 The project uses **Swift Package Manager** to separate concerns into modules:
 
-- **Wims/** (Main iOS app) - SwiftUI views, view models, navigation
+- **/** (Main iOS app) - SwiftUI views, view models, navigation
 - **PersistencyLayer/** (SPM Package) - SwiftData entities, repositories, DTOs
 - **SwiftDataQuery/** (SPM Package) - Generic SwiftData query utilities
 
@@ -281,7 +281,7 @@ PersistencyLayer/
     ├── PersistencyLayerTests.swift      # Main test suite
     └── RepositoryDeleteTests.swift      # Cascade deletion tests
 
-Wims/Wims/
+Wims/
 ├── Views/              # SwiftUI views (15 files)
 ├── ViewModels/         # Observable view models (5 files)
 └── WimsApp.swift       # App entry point

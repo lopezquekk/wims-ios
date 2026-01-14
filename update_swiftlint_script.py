@@ -5,7 +5,7 @@ Update SwiftLint script to include Homebrew paths
 
 import re
 
-project_file = 'Wims/Wims.xcodeproj/project.pbxproj'
+project_file = 'Wims.xcodeproj/project.pbxproj'
 
 # Read the project file
 with open(project_file, 'r') as f:

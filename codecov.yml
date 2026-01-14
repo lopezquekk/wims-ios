@@ -21,7 +21,7 @@ coverage:
 flags:
   unit-tests:
     paths:
-      - Wims/Wims/
+      - Wims/
     carryforward: true
 
   PersistencyLayer:

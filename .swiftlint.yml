@@ -3,15 +3,15 @@
 
 # Paths to include/exclude
 included:
-  - Wims/Wims
+  - Wims
   - PersistencyLayer/Sources
   - PersistencyLayer/Tests
   - SwiftDataQuery/Sources
   - SwiftDataQuery/Tests
 
 excluded:
-  - Wims/Wims.xcodeproj
-  - Wims/Wims/Assets.xcassets
+  - Wims.xcodeproj
+  - Wims/Assets.xcassets
   - "**/.build"
   - .build
   - Pods

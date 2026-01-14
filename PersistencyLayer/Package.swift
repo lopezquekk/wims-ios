@@ -24,7 +24,10 @@ let package = Package(
         ),
         .testTarget(
             name: "PersistencyLayerTests",
-            dependencies: ["PersistencyLayer"]
+            dependencies: ["PersistencyLayer"],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ]
         ),
     ]
 )
