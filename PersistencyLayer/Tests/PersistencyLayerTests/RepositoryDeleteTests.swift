@@ -295,8 +295,11 @@ struct RepositoryDeleteTests {
             Box.self,
             Item.self
         ])
-        // Don't specify schema in ModelConfiguration to avoid bundle resolution issues
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        // Use temporary directory to work around SPM bundle resolution issue
+        // This creates a real file-based container but in a temp location that gets cleaned up
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let configuration = ModelConfiguration(url: tempDir)
         return try ModelContainer(for: schema, configurations: [configuration])
     }
 }
