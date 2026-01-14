@@ -5,13 +5,12 @@
 //  Created by Camilo Lopez on 12/29/25.
 //
 
-import Testing
 import SwiftData
+import Testing
 @testable import Wims
 
 @Suite("Repository Tests")
 struct RepositoryTests {
-
     let container: ModelContainer
 
     init() throws {
