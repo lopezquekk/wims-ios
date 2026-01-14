@@ -204,7 +204,8 @@ struct PersistencyLayerTests {
             Box.self,
             Item.self
         ])
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        // Don't specify schema in ModelConfiguration to avoid bundle resolution issues
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [configuration])
     }
 }
