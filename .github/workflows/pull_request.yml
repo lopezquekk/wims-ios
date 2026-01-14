@@ -97,25 +97,23 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
 
-      - name: Cache DerivedData
-        uses: actions/cache@v4
-        with:
-          path: build/DerivedData
-          key: ${{ runner.os }}-deriveddata-${{ hashFiles('**/Wims.xcodeproj/project.pbxproj') }}
-          restore-keys: |
-            ${{ runner.os }}-deriveddata-
+      - name: Resolve Swift Package Dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -scheme Wims \
+            -project Wims.xcodeproj
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3'
-          bundler-cache: true  # Runs 'bundle install' and caches gems
-
-      - name: Install Dependencies
-        run: bundle install --path vendor/bundle
-
-      - name: Build with Fastlane
-        run: bundle exec fastlane build_app
+      - name: Build App (no archive, no signing)
+        run: |
+          xcodebuild \
+            -scheme Wims \
+            -project Wims.xcodeproj \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -configuration Debug \
+            clean build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
 
   # ========================================
   # Job 5: Unit Tests
