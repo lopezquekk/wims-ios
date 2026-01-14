@@ -55,37 +55,20 @@ platform :ios do
   # ========================================
   # Lane: Build Main App
   # ========================================
-  desc "Build the Wims iOS app"
+  desc "Build the Wims iOS app (build only, no archive/signing)"
   lane :build_app do
-    clear_derived_data if is_ci
-
-    # In CI, just build without archiving (no code signing needed)
-    # Locally, you can still use gym for archiving
-    if is_ci
-      xcodebuild(
-        project: project_path,
-        scheme: SCHEME,
-        destination: DESTINATION,
-        configuration: "Debug",
-        derivedDataPath: derived_data_path,
-        clean: true,
-        build: true,
-        xcargs: "-quiet CODE_SIGNING_ALLOWED=NO"
-      )
-    else
-      gym(
-        project: project_path,
-        scheme: SCHEME,
-        destination: DESTINATION,
-        configuration: "Debug",
-        derived_data_path: derived_data_path,
-        clean: is_ci,
-        output_directory: "build/artifacts",
-        skip_codesigning: true,
-        skip_package_ipa: true,
-        build_path: "build"
-      )
-    end
+    # Simple build without archiving or code signing
+    # This is sufficient for CI verification
+    xcodebuild(
+      project: project_path,
+      scheme: SCHEME,
+      destination: DESTINATION,
+      configuration: "Debug",
+      derivedDataPath: derived_data_path,
+      clean: true,
+      build: true,
+      xcargs: "-quiet CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY=\"\" CODE_SIGNING_REQUIRED=NO"
+    )
   end
 
   # ========================================
