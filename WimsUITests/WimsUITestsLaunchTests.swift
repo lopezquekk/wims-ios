@@ -5,16 +5,17 @@
 //  Created by Camilo Lopez on 12/29/25.
 //
 
-import Testing
 import XCTest
 
-@Suite("Launch Tests")
-struct WimsUITestsLaunchTests {
+final class WimsUITestsLaunchTests: XCTestCase {
     static var runsForEachTargetApplicationUIConfiguration: Bool {
         true
     }
 
-    @Test("App launch")
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+    }
+
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
